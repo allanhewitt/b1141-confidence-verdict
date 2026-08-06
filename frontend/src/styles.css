@@ -1,0 +1,290 @@
+:root {
+  --navy: #102f55;
+  --blue: #1f5f99;
+  --gold: #b67818;
+  --bg: #f7f9fb;
+  --text: #17202a;
+  --muted: #5d6d7e;
+  --danger: #8f2d2d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Aptos", "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.muted.small {
+  font-size: 0.85rem;
+  margin-top: 20px;
+}
+
+.error {
+  color: var(--danger);
+}
+
+/* ---- Shared page wrap ---- */
+
+.wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.wrap-wide {
+  max-width: 760px;
+  justify-content: flex-start;
+  padding-top: 40px;
+}
+
+.wrap h1 {
+  font-size: clamp(1.1rem, 3.2vw, 1.5rem);
+  line-height: 1.35;
+  color: var(--navy);
+  margin: 0 0 28px;
+}
+
+/* ---- Option picker ---- */
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.option {
+  text-align: left;
+  padding: 14px 18px;
+  border-radius: 8px;
+  border: 2px solid var(--blue);
+  background: white;
+  color: var(--blue);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: #eef6ff;
+}
+
+.option.selected {
+  background: var(--blue);
+  color: white;
+}
+
+.option:disabled {
+  cursor: default;
+}
+
+.option:disabled:hover {
+  background: white;
+}
+
+.option.selected:disabled:hover {
+  background: var(--blue);
+}
+
+/* ---- Confidence scale (same pattern as the likert-poll repo) ---- */
+
+.scale {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.anchors-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.points {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.point {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--blue);
+  background: white;
+  color: var(--blue);
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.point:hover {
+  background: #eef6ff;
+}
+
+.point.selected {
+  background: var(--blue);
+  color: white;
+}
+
+.point:disabled {
+  cursor: default;
+}
+
+.point:disabled:hover {
+  background: white;
+}
+
+.point.selected:disabled:hover {
+  background: var(--blue);
+}
+
+/* ---- Submit / confirmation ---- */
+
+.submit {
+  align-self: flex-start;
+  background: var(--navy);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  background: #b7c2cf;
+  cursor: not-allowed;
+}
+
+.submit:not(:disabled):hover {
+  background: var(--blue);
+}
+
+.confirmation {
+  margin-top: 4px;
+}
+
+.change-mind {
+  align-self: flex-start;
+  margin-top: 20px;
+  background: none;
+  border: none;
+  color: var(--blue);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.change-mind:hover {
+  color: var(--navy);
+}
+
+/* ---- Control view ---- */
+
+.controls {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.controls button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--navy);
+  color: white;
+}
+
+.controls button:hover {
+  background: var(--blue);
+}
+
+.controls button.danger {
+  background: white;
+  color: var(--danger);
+  border: 1.5px solid var(--danger);
+}
+
+.controls button.danger:hover {
+  background: #f7e9e9;
+}
+
+/* ---- Heatmap ---- */
+
+.heatmap {
+  margin-top: 12px;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.heatmap-header {
+  margin-bottom: 2px;
+}
+
+.heatmap-axis-label {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.heatmap-col-number {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.heatmap-row-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding-right: 8px;
+}
+
+.heatmap-check {
+  color: #791f1f;
+  margin-left: 6px;
+}
+
+.heatmap-cell {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 10px 0;
+}
+
+.heatmap-total {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}

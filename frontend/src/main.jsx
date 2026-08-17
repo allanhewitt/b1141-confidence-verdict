@@ -5,6 +5,7 @@ import Respond from "./Respond.jsx";
 import Control from "./Control.jsx";
 import Display from "./Display.jsx";
 import "./styles.css";
+import "./landscape.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

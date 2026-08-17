@@ -1,138 +1,141 @@
 # b1141-confidence-verdict
 
-The `confidence-weighted-verdict` GEDL model. Students make a substantive
-judgement and state how confident they are, then encounter a frozen class
-picture and explicitly decide whether to recalibrate their judgement,
-confidence, both, or neither.
+The reusable `confidence-weighted-verdict` GEDL interaction model.
 
-The model is intentionally game-design-informed rather than gamified. Its
-core experience is:
+Students make a substantive judgement and state how confident they are. Those two choices place the learner at one point in a **selection × confidence space**. Before reveal, the learner can see only their own position. The rest of the room is hidden. At reveal, the frozen class landscape appears around them and the app gives personalised, non-evaluative feedback about where they sit within it.
 
-**judge → state confidence → commit → anticipate → reveal → locate yourself → calibrate → resolve**
+The core experience is:
 
-The reveal is consequential because each learner receives both the class
-pattern and anonymous, personalised feedback about where their own
-judgement/confidence sat within it.
+**choose → position → commit → anticipate → reveal → locate → interpret**
+
+This is game-design-informed rather than gamified. The design uses space, hidden information, curiosity, surprise and consequential feedback without points, competition, rewards or a requirement to change one's mind.
 
 ## Essential interaction design
 
-### 1. Initial commitment
+### 1. Selection × confidence creates a position
 
-Students submit two linked dimensions:
+A response has two linked dimensions:
 
-- a verdict/option;
+- substantive option / verdict;
 - confidence (1–5 by default, configurable).
 
-Before reveal they may correct or update that commitment. Once the class
-picture is revealed, the latest pre-reveal position is frozen as their
-`initial` state.
+Together these locate the learner in a bounded two-dimensional possibility space.
 
-### 2. Frozen reveal snapshot
+### 2. The learner sees the space before the class
 
-At reveal the backend snapshots the whole current cohort. This snapshot is
-used for the confrontation even while later calibration changes the live
-current responses. That prevents the evidence the learner encountered from
-silently changing underneath them.
+After committing, the student sees the full grid of possible positions with only one marked cell:
 
-### 3. Personal feedback
+**YOU**
 
-The student heatmap marks the learner's own initial cell with **YOU** and
-reports, anonymously:
+The rest of the cells remain concealed. The app explicitly asks the learner to anticipate whether the class will cluster around them, elsewhere, or spread across the space.
 
-- what proportion of the rest of the class chose the same verdict;
-- average confidence among classmates who chose that verdict;
-- whether the learner was more, less, or similarly confident relative to
-  that peer subset.
+Before reveal, a learner may reposition themselves. At reveal their position is locked.
 
-The UI explicitly states that agreement is social information, not evidence
-that a judgement is correct.
+### 3. Reveal freezes and populates the landscape
 
-### 4. Explicit calibration
+At reveal, the backend freezes the cohort snapshot. The same grid is then populated with the class distribution, while the learner's own cell remains marked **YOU**.
 
-After reveal, the learner must choose one of four legitimate responses:
+The class result is therefore not just an aggregate chart. It is the newly revealed environment surrounding a position the learner created earlier.
 
-- reconsider judgement;
-- reconsider confidence;
-- reconsider both;
-- keep both as they are.
+### 4. Personal feedback is relational, not normative
 
-If only one dimension is reopened, the other is technically locked. A final
-submission is then stored as the learner's post-reveal resolution. Keeping
-the original response is treated as an explicit intellectual action rather
-than as failure to interact.
+The learner receives anonymous feedback derived from the frozen landscape:
 
-### 5. Cohort movement
+- proportion of the rest of the class choosing the same verdict;
+- number of other students occupying the exact same verdict × confidence cell;
+- average confidence among classmates who chose the same verdict;
+- whether the learner's confidence is higher, lower or close to that peer-group average.
 
-The lecturer/projector views distinguish the frozen initial class picture
-from the live/final class picture and summarise four actual outcomes:
+The interface explicitly states that agreement is social information rather than evidence that a judgement is correct.
 
-- judgement only changed;
-- confidence only changed;
-- both changed;
-- both retained.
+There is **no post-reveal change-your-answer phase** in the essential model. The intellectual work after reveal is interpretation of one's position and of the class landscape.
 
-This makes metacognitive movement visible without treating movement itself
-as desirable.
+### 5. The class landscape becomes a discussion object
+
+The aggregate view treats the room as a spatial pattern rather than only a winning option. It exposes neutral descriptive signals such as:
+
+- whether a single verdict dominates;
+- whether overall confidence is relatively high, cautious or mixed;
+- how many cells in the possibility space are occupied;
+- whether a smaller group appears unusually confident.
+
+The lecturer can then discuss clusters, empty regions, confident minorities, uncertain majorities and divided judgement.
+
+## Schell/game-design rationale
+
+The model deliberately applies several ideas from Jesse Schell's *The Art of Game Design* to an educational interaction:
+
+- **Essential experience:** the learner occupies an intellectual position and then discovers what that position means socially.
+- **Space:** selection × confidence forms a rule-governed possibility space.
+- **Secrets / hidden information:** the cohort landscape is concealed until reveal.
+- **Curiosity and anticipation:** the empty landscape creates a question without requiring a second prediction response.
+- **Surprise:** reveal can transform the perceived meaning of the learner's existing position.
+- **Feedback:** the same class landscape produces different feedback for different learners because each entered it from a different position.
+- **Interest curve:** choose → commit → hidden-space anticipation → reveal → personal interpretation.
+
+This gives the confidence model a different characteristic interaction from the Likert-prediction model rather than applying one generic game mechanic everywhere.
 
 ## Projector display
 
-The lecturer control includes **Open projector display ↗**, which opens:
+The lecturer control includes **Open projector display ↗**, opening:
 
 `/#/display/{activity-id}`
 
-The display auto-refreshes and includes a fullscreen control.
+The projector view auto-refreshes and has a fullscreen control.
 
-- **Before reveal:** question, response count/progress, results hidden.
-- **During calibration:** frozen class heatmap, class-level summary and live
-  resolution/movement counts.
-- **Complete:** before/after heatmaps plus the cohort movement summary.
+**Before reveal:**
 
-The lecturer can explicitly mark the activity complete, after which further
-calibration submissions are closed.
+- question and response count;
+- the empty selection × confidence axes;
+- no cohort positions;
+- prompt asking where the room will cluster.
 
-## Heatmap
+**After reveal:**
 
-The aggregate view is an options × confidence grid. Confidence runs left to
-right; cell colour intensity shows how many responses landed in that cell.
-If an activity has a `correct_option` set (for a concept-check use), that row
-is distinguished. `correct_option` remains optional and is `NULL` for
-opinion/judgement activities.
+- frozen class landscape;
+- most selected verdict;
+- average confidence;
+- proportion of high-confidence positions;
+- number of occupied cells/options;
+- neutral landscape signals and a discussion prompt.
+
+## Lecturer control
+
+Before reveal, the lecturer may privately see the live incoming landscape while student/projector views remain concealed. The lecturer can reveal manually where configured, or allow threshold/immediate reveal modes to operate.
+
+After reveal, the lecturer sees the same frozen landscape plus descriptive summaries for discussion.
+
+## Late participants
+
+A student arriving after reveal may still place themselves and receive personalised feedback against the frozen cohort landscape. Their late position does **not** rewrite the class snapshot already encountered by everyone else.
 
 ## Structure
 
-```
+```text
 backend/
   server.js
   schema.sql
 frontend/
   src/
-    Respond.jsx      /#/respond/{id} — commitment, personal reveal, calibration
-    Control.jsx      /#/control/{id} — lecturer controls and cohort movement
-    Display.jsx      /#/display/{id} — projector/fullscreen presentation view
-    Heatmap.jsx      shared heatmap with optional personal markers
+    Respond.jsx       /#/respond/{id}
+    Control.jsx       /#/control/{id}
+    Display.jsx       /#/display/{id}
+    Heatmap.jsx       shared selection × confidence space
+    styles.css        base application styling
+    landscape.css     hidden/revealed landscape styling
 ```
 
 ## Live state and persistence
 
 The in-memory session keeps:
 
-- current responses;
+- current pre-reveal responses;
 - the frozen reveal snapshot;
-- each learner's explicit reconsideration scope;
-- whether reveal and completion have occurred.
+- reveal state.
 
-If `PERSIST_RESPONSES=true`, every submission remains an event row in
-Postgres. `responses.phase` distinguishes `initial` from
-`reconsideration`; `reconsideration_scope` records `judgement`,
-`confidence`, `both`, or `neither` for the post-reveal event.
+If `PERSIST_RESPONSES=true`, submissions continue to be stored as anonymous event rows. The additive `phase` and `reconsideration_scope` columns introduced during an earlier prototype remain in the schema for backwards compatibility; this model now writes only `phase='initial'` and leaves `reconsideration_scope` NULL.
 
-The backend automatically applies the two additive response-table columns
-at startup with `ADD COLUMN IF NOT EXISTS`, so an existing 2026–27 database
-can be upgraded by redeploying the backend. `schema.sql` contains the same
-safe upgrade statements for fresh/manual setup.
-
-Anonymous participant tokens remain activity-scoped browser identifiers,
-not student identities.
+Anonymous participant tokens are activity-scoped browser identifiers, not student identities.
 
 ## Routes
 
@@ -148,8 +151,7 @@ Examples:
 
 ## Deploying to Coolify
 
-As with the other B1141 models, this release changes both backend and
-frontend, so deploy **backend first, then frontend**.
+This release changes both backend and frontend, so deploy **backend first, then frontend**.
 
 Backend:
 
@@ -169,7 +171,4 @@ Frontend:
 
 ## Adding future activities
 
-Content remains database-driven. Add a row to `activities`; no frontend
-code change is required. `options` is a JSON array. Leave `correct_option`
-as `NULL` for open judgement/opinion activities or set it to a valid option
-for a concept check.
+Content remains database-driven. Add a row to `activities`; no frontend code change is required. `options` is a JSON array. Leave `correct_option` as `NULL` for open judgement/opinion activities or set it to a valid option for a concept check.

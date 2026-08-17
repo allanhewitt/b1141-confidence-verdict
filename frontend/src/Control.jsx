@@ -12,9 +12,9 @@ export default function Control() {
 
   useEffect(() => {
     fetch(`${API}/api/config/confidence/${id}`)
-      .then((r) => {
-        if (!r.ok) throw new Error("This activity does not exist.");
-        return r.json();
+      .then((response) => {
+        if (!response.ok) throw new Error("This activity does not exist.");
+        return response.json();
       })
       .then(setConfig)
       .catch((e) => setError(e.message));
@@ -22,7 +22,7 @@ export default function Control() {
 
   const refresh = useCallback(() => {
     fetch(`${API}/api/aggregate/confidence/${id}`)
-      .then((r) => r.json())
+      .then((response) => response.json())
       .then(setAggregate)
       .catch(() => {});
   }, [id]);
@@ -38,13 +38,8 @@ export default function Control() {
     refresh();
   };
 
-  const complete = async () => {
-    await fetch(`${API}/api/session/${id}/complete`, { method: "POST" });
-    refresh();
-  };
-
   const clear = async () => {
-    if (!window.confirm("Clear the live session and return to initial collection?")) return;
+    if (!window.confirm("Clear the live session and return to a hidden landscape?")) return;
     await fetch(`${API}/api/session/${id}/clear`, { method: "POST" });
     refresh();
   };
@@ -52,53 +47,77 @@ export default function Control() {
   if (error) return <div className="wrap"><p className="error">{error}</p></div>;
   if (!config) return <div className="wrap"><p className="muted">Loading…</p></div>;
 
-  const phase = aggregate?.phase || "initial";
-  const movement = aggregate?.movement || {};
+  const landscape = aggregate?.landscape || {};
 
   return (
-    <div className="control-shell">
+    <div className="control-shell landscape-control-shell">
       <div className="activity-kicker">B1141 · Lecturer control · Week {config.week}</div>
       <h1>{config.question}</h1>
 
-      <div className="control-status-grid">
-        <Status label="Phase" value={phaseLabel(phase)} />
-        <Status label="Initial responses" value={aggregate?.total ?? 0} />
-        <Status label="Resolved" value={`${aggregate?.resolved_count ?? 0} / ${aggregate?.total ?? 0}`} />
-        <Status label="Initial avg. confidence" value={fmt(aggregate?.initial_mean_confidence)} />
+      <div className="control-status-grid landscape-status-grid">
+        <Status label="Phase" value={aggregate?.revealed ? "Landscape revealed" : "Landscape hidden"} />
+        <Status label="Responses" value={aggregate?.revealed ? aggregate?.total ?? 0 : aggregate?.live_total ?? 0} />
+        <Status label="Average confidence" value={formatConfidence(aggregate?.mean_confidence, config.confidence_points)} />
+        <Status label="Occupied cells" value={aggregate?.revealed ? landscape.occupied_cells ?? "—" : "hidden"} />
       </div>
 
       <div className="control-toolbar">
-        <a className="projector-link" href={`#/display/${id}`} target="_blank" rel="noreferrer">Open projector display ↗</a>
-        {!aggregate?.revealed && <button onClick={reveal}>Reveal class picture</button>}
-        {aggregate?.revealed && !aggregate?.complete && <button onClick={complete}>Complete activity</button>}
+        <a className="projector-link" href={`#/display/${id}`} target="_blank" rel="noreferrer">
+          Open projector display ↗
+        </a>
+        {!aggregate?.revealed && <button onClick={reveal}>Reveal class landscape</button>}
         <button className="danger" onClick={clear}>Clear session</button>
       </div>
 
       {!aggregate?.revealed ? (
         <section className="dashboard-section">
-          <div className="section-heading"><div><div className="eyebrow">Private lecturer view</div><h2>Responses arriving</h2></div></div>
-          <Heatmap options={config.options} confidencePoints={config.confidence_points} matrix={aggregate?.current_matrix || aggregate?.matrix || {}} correctOption={config.correct_option} />
-          <p className="muted small">Students cannot see this class picture until reveal.</p>
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">Private lecturer view</div>
+              <h2>Positions arriving in the hidden space</h2>
+            </div>
+          </div>
+          <Heatmap
+            options={config.options}
+            confidencePoints={config.confidence_points}
+            matrix={aggregate?.matrix || {}}
+            correctOption={config.correct_option}
+          />
+          <p className="muted small">Students and the projector see only their own position or the hidden-space holding view until reveal.</p>
         </section>
       ) : (
         <>
-          <section className="movement-summary">
-            <Movement label="Judgement only changed" value={movement.judgement_only || 0} />
-            <Movement label="Confidence only changed" value={movement.confidence_only || 0} />
-            <Movement label="Both changed" value={movement.both_changed || 0} />
-            <Movement label="Both retained" value={movement.neither_changed || 0} />
+          <section className="landscape-summary-row">
+            <Summary label="Most selected" value={landscape.dominant_option || "—"} sub={landscape.dominant_pct == null ? "" : `${Math.round(landscape.dominant_pct)}% of the room`} />
+            <Summary label="Average confidence" value={formatConfidence(landscape.mean_confidence, config.confidence_points)} sub="across all positions" />
+            <Summary label="High confidence" value={landscape.high_confidence_pct == null ? "—" : `${Math.round(landscape.high_confidence_pct)}%`} sub={`confidence ${Math.ceil(config.confidence_points * 0.8)}–${config.confidence_points}`} />
+            <Summary label="Space occupied" value={`${landscape.occupied_cells ?? 0} cells`} sub={`${landscape.occupied_options ?? 0} verdict options used`} />
           </section>
 
-          <div className="control-heatmap-grid">
-            <section className="dashboard-section">
-              <div className="section-heading"><div><div className="eyebrow">Frozen reveal</div><h2>Initial class picture</h2></div></div>
-              <Heatmap options={config.options} confidencePoints={config.confidence_points} matrix={aggregate?.initial_matrix || {}} correctOption={config.correct_option} />
-            </section>
-            <section className="dashboard-section">
-              <div className="section-heading"><div><div className="eyebrow">Live calibration</div><h2>Current class picture</h2></div></div>
-              <Heatmap options={config.options} confidencePoints={config.confidence_points} matrix={aggregate?.current_matrix || {}} correctOption={config.correct_option} />
-            </section>
-          </div>
+          <section className="dashboard-section revealed-dashboard-section">
+            <div className="section-heading">
+              <div>
+                <div className="eyebrow">Frozen reveal</div>
+                <h2>Judgement × confidence landscape</h2>
+              </div>
+              <div className="response-chip">{aggregate.total} positions</div>
+            </div>
+            <Heatmap
+              options={config.options}
+              confidencePoints={config.confidence_points}
+              matrix={aggregate.matrix}
+              correctOption={config.correct_option}
+            />
+          </section>
+
+          <section className="landscape-signals-card">
+            <div className="eyebrow">Useful patterns to discuss</div>
+            <h2>What shape has the room produced?</h2>
+            <div className="landscape-signal-list">
+              {(landscape.signals || []).map((signal) => <div key={signal}>{signal}</div>)}
+              <div>Look across the grid for clusters, empty regions, confident minorities and uncertain majorities.</div>
+            </div>
+          </section>
         </>
       )}
     </div>
@@ -109,16 +128,16 @@ function Status({ label, value }) {
   return <div className="status-card"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-function Movement({ label, value }) {
-  return <div className="movement-card"><span>{label}</span><strong>{value}</strong></div>;
+function Summary({ label, value, sub }) {
+  return (
+    <div className="landscape-summary-card">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {sub && <small>{sub}</small>}
+    </div>
+  );
 }
 
-function phaseLabel(phase) {
-  if (phase === "revealed") return "Calibration open";
-  if (phase === "complete") return "Complete";
-  return "Initial judgement";
-}
-
-function fmt(value) {
-  return value == null ? "—" : Number(value).toFixed(1);
+function formatConfidence(value, points) {
+  return value == null ? "—" : `${Number(value).toFixed(1)} / ${points}`;
 }

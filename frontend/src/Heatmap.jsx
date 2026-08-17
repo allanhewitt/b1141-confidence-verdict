@@ -18,36 +18,32 @@ export default function Heatmap({
   matrix,
   correctOption,
   markers = [],
+  showCounts = true,
+  showTotals = true,
+  hiddenSpace = false,
   ariaLabel = "Class responses by verdict and confidence",
 }) {
   const safeMatrix = matrix || {};
   const allCounts = options.flatMap((opt) => safeMatrix[opt] || []);
   const max = Math.max(1, ...allCounts);
   const confidenceLevels = Array.from({ length: confidencePoints }, (_, i) => i + 1);
+  const columns = `minmax(150px, 1.55fr) repeat(${confidencePoints}, minmax(44px, 1fr))${showTotals ? " 58px" : ""}`;
 
   return (
-    <div className="heatmap" role="img" aria-label={ariaLabel}>
-      <div
-        className="heatmap-grid heatmap-header"
-        style={{ gridTemplateColumns: `minmax(150px, 1.55fr) repeat(${confidencePoints}, minmax(44px, 1fr)) 58px` }}
-      >
+    <div className={`heatmap${hiddenSpace ? " hidden-space" : ""}`} role="img" aria-label={ariaLabel}>
+      <div className="heatmap-grid heatmap-header" style={{ gridTemplateColumns: columns }}>
         <div />
         <div className="heatmap-axis-label" style={{ gridColumn: `span ${confidencePoints}` }}>
           Confidence
         </div>
-        <div />
+        {showTotals && <div />}
       </div>
-      <div
-        className="heatmap-grid"
-        style={{ gridTemplateColumns: `minmax(150px, 1.55fr) repeat(${confidencePoints}, minmax(44px, 1fr)) 58px` }}
-      >
+      <div className="heatmap-grid" style={{ gridTemplateColumns: columns }}>
         <div />
         {confidenceLevels.map((n) => (
-          <div className="heatmap-col-number" key={n}>
-            {n}
-          </div>
+          <div className="heatmap-col-number" key={n}>{n}</div>
         ))}
-        <div className="heatmap-col-number">Total</div>
+        {showTotals && <div className="heatmap-col-number">Total</div>}
       </div>
 
       {options.map((opt) => {
@@ -56,29 +52,25 @@ export default function Heatmap({
         const isCorrect = correctOption && opt === correctOption;
         const ramp = isCorrect ? RED_RAMP : BLUE_RAMP;
         return (
-          <div
-            className="heatmap-grid heatmap-row"
-            style={{ gridTemplateColumns: `minmax(150px, 1.55fr) repeat(${confidencePoints}, minmax(44px, 1fr)) 58px` }}
-            key={opt}
-          >
+          <div className="heatmap-grid heatmap-row" style={{ gridTemplateColumns: columns }} key={opt}>
             <div className="heatmap-row-label">
               {opt}
               {isCorrect && <span className="heatmap-check">✓</span>}
             </div>
-            {counts.map((c, i) => {
+            {counts.map((count, index) => {
               const cellMarkers = markers.filter(
-                (marker) => marker.option === opt && marker.confidence === i + 1
+                (marker) => marker.option === opt && marker.confidence === index + 1
               );
               return (
                 <div
-                  key={i}
-                  className={`heatmap-cell${cellMarkers.length ? " marked" : ""}`}
+                  key={index}
+                  className={`heatmap-cell${cellMarkers.length ? " marked" : ""}${hiddenSpace ? " concealed" : ""}`}
                   style={{
-                    background: colorFor(c, max, ramp),
-                    color: c === 0 ? "var(--muted)" : textColorFor(c, max),
+                    background: hiddenSpace ? undefined : colorFor(count, max, ramp),
+                    color: hiddenSpace || count === 0 ? "var(--muted)" : textColorFor(count, max),
                   }}
                 >
-                  <span className="heatmap-count">{c === 0 ? "" : c}</span>
+                  {showCounts && !hiddenSpace && <span className="heatmap-count">{count === 0 ? "" : count}</span>}
                   {cellMarkers.map((marker, markerIndex) => (
                     <span
                       className={`heatmap-marker ${marker.kind || "personal"}`}
@@ -90,7 +82,7 @@ export default function Heatmap({
                 </div>
               );
             })}
-            <div className="heatmap-total">{total}</div>
+            {showTotals && <div className="heatmap-total">{hiddenSpace ? "" : total}</div>}
           </div>
         );
       })}

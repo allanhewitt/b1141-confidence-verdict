@@ -12,16 +12,24 @@ function textColorFor(count, max) {
   return idx >= 3 ? "#fff" : "var(--text)";
 }
 
-export default function Heatmap({ options, confidencePoints, matrix, correctOption }) {
-  const allCounts = options.flatMap((opt) => matrix[opt] || []);
+export default function Heatmap({
+  options,
+  confidencePoints,
+  matrix,
+  correctOption,
+  markers = [],
+  ariaLabel = "Class responses by verdict and confidence",
+}) {
+  const safeMatrix = matrix || {};
+  const allCounts = options.flatMap((opt) => safeMatrix[opt] || []);
   const max = Math.max(1, ...allCounts);
   const confidenceLevels = Array.from({ length: confidencePoints }, (_, i) => i + 1);
 
   return (
-    <div className="heatmap">
+    <div className="heatmap" role="img" aria-label={ariaLabel}>
       <div
         className="heatmap-grid heatmap-header"
-        style={{ gridTemplateColumns: `150px repeat(${confidencePoints}, 1fr) 56px` }}
+        style={{ gridTemplateColumns: `minmax(150px, 1.55fr) repeat(${confidencePoints}, minmax(44px, 1fr)) 58px` }}
       >
         <div />
         <div className="heatmap-axis-label" style={{ gridColumn: `span ${confidencePoints}` }}>
@@ -31,7 +39,7 @@ export default function Heatmap({ options, confidencePoints, matrix, correctOpti
       </div>
       <div
         className="heatmap-grid"
-        style={{ gridTemplateColumns: `150px repeat(${confidencePoints}, 1fr) 56px` }}
+        style={{ gridTemplateColumns: `minmax(150px, 1.55fr) repeat(${confidencePoints}, minmax(44px, 1fr)) 58px` }}
       >
         <div />
         {confidenceLevels.map((n) => (
@@ -43,32 +51,45 @@ export default function Heatmap({ options, confidencePoints, matrix, correctOpti
       </div>
 
       {options.map((opt) => {
-        const counts = matrix[opt] || Array.from({ length: confidencePoints }, () => 0);
+        const counts = safeMatrix[opt] || Array.from({ length: confidencePoints }, () => 0);
         const total = counts.reduce((a, b) => a + b, 0);
         const isCorrect = correctOption && opt === correctOption;
         const ramp = isCorrect ? RED_RAMP : BLUE_RAMP;
         return (
           <div
             className="heatmap-grid heatmap-row"
-            style={{ gridTemplateColumns: `150px repeat(${confidencePoints}, 1fr) 56px` }}
+            style={{ gridTemplateColumns: `minmax(150px, 1.55fr) repeat(${confidencePoints}, minmax(44px, 1fr)) 58px` }}
             key={opt}
           >
             <div className="heatmap-row-label">
               {opt}
               {isCorrect && <span className="heatmap-check">✓</span>}
             </div>
-            {counts.map((c, i) => (
-              <div
-                key={i}
-                className="heatmap-cell"
-                style={{
-                  background: colorFor(c, max, ramp),
-                  color: c === 0 ? "var(--muted)" : textColorFor(c, max),
-                }}
-              >
-                {c === 0 ? "" : c}
-              </div>
-            ))}
+            {counts.map((c, i) => {
+              const cellMarkers = markers.filter(
+                (marker) => marker.option === opt && marker.confidence === i + 1
+              );
+              return (
+                <div
+                  key={i}
+                  className={`heatmap-cell${cellMarkers.length ? " marked" : ""}`}
+                  style={{
+                    background: colorFor(c, max, ramp),
+                    color: c === 0 ? "var(--muted)" : textColorFor(c, max),
+                  }}
+                >
+                  <span className="heatmap-count">{c === 0 ? "" : c}</span>
+                  {cellMarkers.map((marker, markerIndex) => (
+                    <span
+                      className={`heatmap-marker ${marker.kind || "personal"}`}
+                      key={`${marker.label}-${markerIndex}`}
+                    >
+                      {marker.label}
+                    </span>
+                  ))}
+                </div>
+              );
+            })}
             <div className="heatmap-total">{total}</div>
           </div>
         );

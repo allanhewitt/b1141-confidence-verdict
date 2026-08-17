@@ -19,19 +19,17 @@ app.use(cors({ origin: corsOrigin }));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const PERSIST_RESPONSES = process.env.PERSIST_RESPONSES === "true";
 
-// Live state is deliberately richer than the original poll. Before reveal,
-// responses[token] is simply the learner's latest commitment. At reveal we
-// freeze a snapshot of those commitments. Subsequent calibration changes the
-// current response but never the snapshot that generated the confrontation.
+// The live mechanic is a hidden two-dimensional space. Before reveal,
+// learners may reposition themselves. At reveal, the cohort landscape is
+// frozen. The point is then to locate and interpret one's position in that
+// landscape, not to optimise or change it afterwards.
 const sessionStore = new Map();
 
 function emptySession() {
   return {
     responses: {},
     snapshot: null,
-    resolutions: {},
     revealed: false,
-    complete: false,
   };
 }
 
@@ -89,39 +87,88 @@ function meanConfidence(responseMap) {
   return values.reduce((sum, response) => sum + response.confidence, 0) / values.length;
 }
 
-function movementSummary(session) {
-  const movement = {
-    judgement_only: 0,
-    confidence_only: 0,
-    both_changed: 0,
-    neither_changed: 0,
-  };
-  const scopeCounts = { judgement: 0, confidence: 0, both: 0, neither: 0 };
+function analyseLandscape(row, responseMap) {
+  const entries = Object.values(responseMap || {});
+  const total = entries.length;
+  if (!total) {
+    return {
+      total: 0,
+      dominant_option: null,
+      dominant_pct: null,
+      mean_confidence: null,
+      occupied_cells: 0,
+      occupied_options: 0,
+      high_confidence_pct: null,
+      signals: [],
+    };
+  }
 
-  Object.entries(session.resolutions).forEach(([token, resolution]) => {
-    if (scopeCounts[resolution.scope] !== undefined) scopeCounts[resolution.scope]++;
-    const before = session.snapshot?.[token];
-    const after = session.responses[token];
-    if (!before || !after) return;
-
-    const judgementChanged = before.option !== after.option;
-    const confidenceChanged = before.confidence !== after.confidence;
-    if (judgementChanged && confidenceChanged) movement.both_changed++;
-    else if (judgementChanged) movement.judgement_only++;
-    else if (confidenceChanged) movement.confidence_only++;
-    else movement.neither_changed++;
+  const optionStats = row.options.map((option) => {
+    const matching = entries.filter((response) => response.option === option);
+    const count = matching.length;
+    const mean = count
+      ? matching.reduce((sum, response) => sum + response.confidence, 0) / count
+      : null;
+    return { option, count, pct: (count / total) * 100, mean_confidence: mean };
   });
 
-  return { movement, scope_counts: scopeCounts };
+  const sorted = [...optionStats].sort((a, b) => b.count - a.count);
+  const dominant = sorted[0];
+  const overallMean = meanConfidence(responseMap);
+  const highCutoff = Math.max(2, Math.ceil(row.confidence_points * 0.8));
+  const highCount = entries.filter((response) => response.confidence >= highCutoff).length;
+  const occupied = new Set(entries.map((response) => `${response.option}::${response.confidence}`));
+  const occupiedOptions = optionStats.filter((stat) => stat.count > 0).length;
+
+  const signals = [];
+  if (dominant.pct >= 60) {
+    signals.push(`${Math.round(dominant.pct)}% of the room selected ${dominant.option}.`);
+  } else if (dominant.pct < 50 && occupiedOptions > 1) {
+    signals.push("No single verdict accounts for half of the room.");
+  }
+
+  const confidenceRatio = overallMean / row.confidence_points;
+  if (confidenceRatio >= 0.74) {
+    signals.push("Confidence is relatively high across the room.");
+  } else if (confidenceRatio <= 0.52) {
+    signals.push("The room is relatively cautious in its confidence.");
+  } else {
+    signals.push("Confidence is mixed rather than uniformly high or low.");
+  }
+
+  const minorityConviction = optionStats
+    .filter((stat) => stat.count >= 2 && stat.pct <= 35 && stat.mean_confidence != null)
+    .sort((a, b) => b.mean_confidence - a.mean_confidence)[0];
+  if (
+    minorityConviction &&
+    minorityConviction.mean_confidence >= row.confidence_points * 0.74 &&
+    minorityConviction.mean_confidence >= overallMean + 0.35
+  ) {
+    signals.push(
+      `${minorityConviction.option} is a smaller group, but its average confidence is comparatively high.`
+    );
+  }
+
+  return {
+    total,
+    dominant_option: dominant.option,
+    dominant_pct: dominant.pct,
+    mean_confidence: overallMean,
+    occupied_cells: occupied.size,
+    occupied_options: occupiedOptions,
+    high_confidence_pct: (highCount / total) * 100,
+    option_stats: optionStats,
+    signals,
+  };
 }
 
-async function persistResponse(activityId, token, response, phase, scope = null) {
+async function persistResponse(activityId, token, response) {
   if (!PERSIST_RESPONSES) return;
   await pool.query(
     `INSERT INTO responses
       (activity_id, respondent_token, option, confidence, phase, reconsideration_scope)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [activityId, token, response.option, response.confidence, phase, scope]
+     VALUES ($1, $2, $3, $4, 'initial', NULL)`,
+    [activityId, token, response.option, response.confidence]
   );
 }
 
@@ -156,14 +203,11 @@ app.get("/api/config/confidence/:id", async (req, res) => {
   res.json(serializeActivity(row));
 });
 
-// Before reveal this endpoint records/replaces the learner's current
-// commitment. After reveal, the same endpoint records one explicit final
-// calibration. The requested scope controls which dimensions may change.
 app.post("/api/response/confidence/:id", async (req, res) => {
   const row = await findActivity(req.params.id);
   if (!row) return res.status(404).json({ error: "Unknown activity" });
 
-  const { option, confidence, token, scope = null } = req.body;
+  const { option, confidence, token } = req.body;
   if (!row.options.includes(option)) {
     return res.status(400).json({ error: "Invalid option" });
   }
@@ -179,69 +223,24 @@ app.post("/api/response/confidence/:id", async (req, res) => {
   }
 
   const session = getSession(req.params.id);
-  if (session.complete) {
-    return res.status(409).json({ error: "This activity is complete" });
+  const response = { option, confidence };
+
+  // Existing pre-reveal participants may reposition themselves. Once the
+  // landscape has been revealed, their committed position is locked because
+  // that is the position to which the feedback refers.
+  if (session.revealed && session.snapshot?.[token]) {
+    return res.status(409).json({ error: "Your position was locked when the class landscape was revealed" });
   }
 
-  // Normal pre-reveal commitment: revisions simply replace the current
-  // position. The snapshot is not created until the reveal actually occurs.
-  if (!session.revealed) {
-    const response = { option, confidence };
-    session.responses[token] = response;
-    await persistResponse(req.params.id, token, response, "initial");
-    return res.json({
-      ok: true,
-      count: Object.keys(session.responses).length,
-      phase: "initial",
-    });
-  }
-
-  // A learner who submits for the first time after a threshold/manual reveal
-  // has not seen results through this UI yet. Admit the late initial response
-  // and add it to the reveal snapshot so they can still receive feedback.
-  if (!session.snapshot?.[token]) {
-    const response = { option, confidence };
-    session.responses[token] = response;
-    session.snapshot[token] = { ...response };
-    await persistResponse(req.params.id, token, response, "initial");
-    return res.json({
-      ok: true,
-      count: Object.keys(session.responses).length,
-      phase: "revealed",
-      late_initial: true,
-    });
-  }
-
-  if (session.resolutions[token]) {
-    return res.status(409).json({ error: "Your reconsideration is already locked in" });
-  }
-
-  const allowedScopes = ["judgement", "confidence", "both", "neither"];
-  if (!allowedScopes.includes(scope)) {
-    return res.status(400).json({ error: "Choose what you want to reconsider" });
-  }
-
-  const initial = session.snapshot[token];
-  let finalResponse = { option, confidence };
-
-  if (scope === "neither") {
-    finalResponse = { ...initial };
-  } else if (scope === "judgement" && confidence !== initial.confidence) {
-    return res.status(400).json({ error: "Confidence is locked for this reconsideration" });
-  } else if (scope === "confidence" && option !== initial.option) {
-    return res.status(400).json({ error: "Judgement is locked for this reconsideration" });
-  }
-
-  session.responses[token] = finalResponse;
-  session.resolutions[token] = { scope, submitted_at: new Date().toISOString() };
-  await persistResponse(req.params.id, token, finalResponse, "reconsideration", scope);
+  // Late participants may still place themselves after reveal. They receive
+  // personal feedback against the frozen class landscape, but do not alter it.
+  session.responses[token] = response;
+  await persistResponse(req.params.id, token, response);
 
   res.json({
     ok: true,
-    phase: "reconsideration",
-    initial,
-    current: finalResponse,
-    resolution: session.resolutions[token],
+    count: Object.keys(session.responses).length,
+    late: Boolean(session.revealed),
   });
 });
 
@@ -250,43 +249,34 @@ app.get("/api/aggregate/confidence/:id", async (req, res) => {
   if (!row) return res.status(404).json({ error: "Unknown activity" });
   const session = getSession(req.params.id);
 
-  const total = Object.keys(session.responses).length;
+  const liveTotal = Object.keys(session.responses).length;
   const thresholdMet =
     !!row.cohort_size &&
-    total / row.cohort_size >= (row.reveal_threshold ?? 1);
+    liveTotal / row.cohort_size >= (row.reveal_threshold ?? 1);
 
   const automaticReveal =
     row.reveal_mode === "immediate" ||
     (row.reveal_mode === "threshold" && thresholdMet);
   if (automaticReveal && !session.revealed) freezeSnapshot(session);
 
-  const initialSource = session.snapshot || session.responses;
-  const initialMatrix = buildMatrix(row, initialSource);
-  const currentMatrix = buildMatrix(row, session.responses);
-  const { movement, scope_counts } = movementSummary(session);
-  const phase = session.complete ? "complete" : session.revealed ? "revealed" : "initial";
+  const visibleSource = session.revealed ? session.snapshot || {} : session.responses;
+  const total = Object.keys(visibleSource).length;
+  const matrix = buildMatrix(row, visibleSource);
+  const landscape = analyseLandscape(row, visibleSource);
 
   res.json({
     id: req.params.id,
     total,
-    matrix: session.revealed ? initialMatrix : currentMatrix,
-    initial_matrix: initialMatrix,
-    current_matrix: currentMatrix,
-    initial_mean_confidence: meanConfidence(initialSource),
-    current_mean_confidence: meanConfidence(session.responses),
+    live_total: liveTotal,
+    matrix,
     revealed: session.revealed,
-    complete: session.complete,
-    phase,
+    phase: session.revealed ? "revealed" : "hidden",
     thresholdMet,
-    resolved_count: Object.keys(session.resolutions).length,
-    movement,
-    scope_counts,
+    mean_confidence: meanConfidence(visibleSource),
+    landscape,
   });
 });
 
-// Personal feedback is derived from the frozen reveal snapshot and excludes
-// the learner from peer comparison. It remains anonymous: the token is only
-// an activity-scoped browser key, never a student identity.
 app.get("/api/personal/confidence/:id", async (req, res) => {
   const row = await findActivity(req.params.id);
   if (!row) return res.status(404).json({ error: "Unknown activity" });
@@ -296,32 +286,37 @@ app.get("/api/personal/confidence/:id", async (req, res) => {
   }
 
   const session = getSession(req.params.id);
-  const current = session.responses[token] || null;
+  const position = session.snapshot?.[token] || session.responses[token] || null;
+  if (!position) return res.status(404).json({ error: "No committed response for this session" });
+
   if (!session.revealed) {
-    return res.json({ revealed: false, current });
+    return res.json({ revealed: false, position });
   }
 
-  const initial = session.snapshot?.[token] || null;
-  if (!initial) return res.status(404).json({ error: "No committed response for this session" });
-
-  const peerEntries = Object.entries(session.snapshot)
+  // Compare the learner with the frozen cohort. If they were part of that
+  // snapshot, exclude them from their own peer statistics. If they arrived
+  // after reveal, the whole snapshot is their peer landscape.
+  const peerEntries = Object.entries(session.snapshot || {})
     .filter(([peerToken]) => peerToken !== token)
     .map(([, response]) => response);
-  const sameOptionPeers = peerEntries.filter((response) => response.option === initial.option);
+  const sameOptionPeers = peerEntries.filter((response) => response.option === position.option);
+  const sameCellPeers = peerEntries.filter(
+    (response) => response.option === position.option && response.confidence === position.confidence
+  );
   const peerMean = sameOptionPeers.length
     ? sameOptionPeers.reduce((sum, response) => sum + response.confidence, 0) / sameOptionPeers.length
     : null;
 
   res.json({
     revealed: true,
-    complete: session.complete,
-    initial,
-    current,
-    resolution: session.resolutions[token] || null,
+    position,
     peers_total: peerEntries.length,
     same_option_count: sameOptionPeers.length,
     same_option_pct: peerEntries.length ? (sameOptionPeers.length / peerEntries.length) * 100 : null,
+    same_cell_count: sameCellPeers.length,
+    same_cell_pct: peerEntries.length ? (sameCellPeers.length / peerEntries.length) * 100 : null,
     peer_same_option_mean_confidence: peerMean,
+    landscape: analyseLandscape(row, session.snapshot || {}),
   });
 });
 
@@ -331,15 +326,6 @@ app.post("/api/session/:id/reveal", (req, res) => {
   res.json({ ok: true, phase: "revealed" });
 });
 
-app.post("/api/session/:id/complete", (req, res) => {
-  const session = getSession(req.params.id);
-  if (!session.revealed) {
-    return res.status(409).json({ error: "Reveal the class response first" });
-  }
-  session.complete = true;
-  res.json({ ok: true, phase: "complete" });
-});
-
 app.post("/api/session/:id/clear", (req, res) => {
   sessionStore.set(req.params.id, emptySession());
   res.json({ ok: true });
@@ -347,6 +333,9 @@ app.post("/api/session/:id/clear", (req, res) => {
 
 app.get("/api/health", (req, res) => res.json({ ok: true, persisting: PERSIST_RESPONSES }));
 
+// Keep the additive columns introduced by the earlier calibration prototype.
+// They are harmless for existing databases and avoid destructive migrations;
+// this model now writes only phase='initial'.
 async function ensureSchema() {
   await pool.query(`
     ALTER TABLE responses

@@ -1,76 +1,175 @@
 # b1141-confidence-verdict
 
-The `confidence-weighted-verdict` GEDL model. Same conventions as
-`b1141-likert-poll`: one repo, `/backend` + `/frontend`, HashRouter, the
-CORS wildcard fix, Postgres for config and (optionally) persisted
-responses, anonymous per-browser token so a "change your mind" revision
-replaces the live count rather than adding to it.
+The `confidence-weighted-verdict` GEDL model. Students make a substantive
+judgement and state how confident they are, then encounter a frozen class
+picture and explicitly decide whether to recalibrate their judgement,
+confidence, both, or neither.
 
-## What's different from the likert repo
+The model is intentionally game-design-informed rather than gamified. Its
+core experience is:
 
-- **Two-part submission**: students pick one option, then a confidence
-  level (1–5 by default, configurable), submitted together.
-- **Heatmap, not a bar chart**: the aggregate view is an options × confidence
-  grid. Confidence runs left to right; cell colour intensity shows how many
-  responses landed in that cell. If an activity has a `correct_option` set
-  (for a future concept-check use, not Week One's opinion question), that
-  row renders in red instead of blue, so a confidently-wrong cluster is
-  visible at a glance.
-- **`correct_option` is optional** — `NULL` for opinion questions like Week
-  One's "Who is excluded?", set to one of the option strings for a concept
-  check. Nothing else in the schema or UI changes between the two uses.
+**judge → state confidence → commit → anticipate → reveal → locate yourself → calibrate → resolve**
+
+The reveal is consequential because each learner receives both the class
+pattern and anonymous, personalised feedback about where their own
+judgement/confidence sat within it.
+
+## Essential interaction design
+
+### 1. Initial commitment
+
+Students submit two linked dimensions:
+
+- a verdict/option;
+- confidence (1–5 by default, configurable).
+
+Before reveal they may correct or update that commitment. Once the class
+picture is revealed, the latest pre-reveal position is frozen as their
+`initial` state.
+
+### 2. Frozen reveal snapshot
+
+At reveal the backend snapshots the whole current cohort. This snapshot is
+used for the confrontation even while later calibration changes the live
+current responses. That prevents the evidence the learner encountered from
+silently changing underneath them.
+
+### 3. Personal feedback
+
+The student heatmap marks the learner's own initial cell with **YOU** and
+reports, anonymously:
+
+- what proportion of the rest of the class chose the same verdict;
+- average confidence among classmates who chose that verdict;
+- whether the learner was more, less, or similarly confident relative to
+  that peer subset.
+
+The UI explicitly states that agreement is social information, not evidence
+that a judgement is correct.
+
+### 4. Explicit calibration
+
+After reveal, the learner must choose one of four legitimate responses:
+
+- reconsider judgement;
+- reconsider confidence;
+- reconsider both;
+- keep both as they are.
+
+If only one dimension is reopened, the other is technically locked. A final
+submission is then stored as the learner's post-reveal resolution. Keeping
+the original response is treated as an explicit intellectual action rather
+than as failure to interact.
+
+### 5. Cohort movement
+
+The lecturer/projector views distinguish the frozen initial class picture
+from the live/final class picture and summarise four actual outcomes:
+
+- judgement only changed;
+- confidence only changed;
+- both changed;
+- both retained.
+
+This makes metacognitive movement visible without treating movement itself
+as desirable.
+
+## Projector display
+
+The lecturer control includes **Open projector display ↗**, which opens:
+
+`/#/display/{activity-id}`
+
+The display auto-refreshes and includes a fullscreen control.
+
+- **Before reveal:** question, response count/progress, results hidden.
+- **During calibration:** frozen class heatmap, class-level summary and live
+  resolution/movement counts.
+- **Complete:** before/after heatmaps plus the cohort movement summary.
+
+The lecturer can explicitly mark the activity complete, after which further
+calibration submissions are closed.
+
+## Heatmap
+
+The aggregate view is an options × confidence grid. Confidence runs left to
+right; cell colour intensity shows how many responses landed in that cell.
+If an activity has a `correct_option` set (for a concept-check use), that row
+is distinguished. `correct_option` remains optional and is `NULL` for
+opinion/judgement activities.
 
 ## Structure
 
 ```
 backend/
   server.js
-  schema.sql        Run once; creates tables + seeds Week One
+  schema.sql
 frontend/
   src/
-    Respond.jsx      /#/respond/{id} — pick option, pick confidence
-    Control.jsx      /#/control/{id} — heatmap, reveal/clear
-    Heatmap.jsx       shared by both views
+    Respond.jsx      /#/respond/{id} — commitment, personal reveal, calibration
+    Control.jsx      /#/control/{id} — lecturer controls and cohort movement
+    Display.jsx      /#/display/{id} — projector/fullscreen presentation view
+    Heatmap.jsx      shared heatmap with optional personal markers
 ```
 
-## Setting up the database
+## Live state and persistence
 
-```sql
-CREATE DATABASE b1141_confidence_verdict;
-```
+The in-memory session keeps:
 
-Then, connected to that database, run `backend/schema.sql` in full — same
-`psql` approach as the likert repo. It creates `activities` and
-`responses`, and seeds:
+- current responses;
+- the frozen reveal snapshot;
+- each learner's explicit reconsideration scope;
+- whether reveal and completion have occurred.
 
-```
-b1141-w1-least-shared-benefit
-```
+If `PERSIST_RESPONSES=true`, every submission remains an event row in
+Postgres. `responses.phase` distinguishes `initial` from
+`reconsideration`; `reconsideration_scope` records `judgement`,
+`confidence`, `both`, or `neither` for the post-reveal event.
 
-— Week One's "Who is excluded?" question, four options, no correct answer
-set.
+The backend automatically applies the two additive response-table columns
+at startup with `ADD COLUMN IF NOT EXISTS`, so an existing 2026–27 database
+can be upgraded by redeploying the backend. `schema.sql` contains the same
+safe upgrade statements for fresh/manual setup.
+
+Anonymous participant tokens remain activity-scoped browser identifiers,
+not student identities.
 
 ## Routes
 
-- `/#/respond/{id}` — e.g. `/#/respond/b1141-w1-least-shared-benefit`
-- `/#/control/{id}` — same id, your view
+- `/#/respond/{id}`
+- `/#/control/{id}`
+- `/#/display/{id}`
+
+Examples:
+
+- `/#/respond/b1141-w1-least-shared-benefit`
+- `/#/control/b1141-w1-least-shared-benefit`
+- `/#/display/b1141-w1-least-shared-benefit`
 
 ## Deploying to Coolify
 
-Identical steps to `b1141-likert-poll`:
+As with the other B1141 models, this release changes both backend and
+frontend, so deploy **backend first, then frontend**.
 
-1. Push this repo to `github.com/allanhewitt/b1141-confidence-verdict`
-2. Create the database and run `schema.sql`
-3. Backend: Base Directory `/backend`, port 4000, not a static site.
-   Env vars: `DATABASE_URL` (internal Postgres URL), `PORT=4000`,
-   `ALLOWED_ORIGINS=*`, `PERSIST_RESPONSES`.
-4. Frontend: Base Directory `/frontend`, Publish Directory `/dist`, port
-   80, static site ticked. `VITE_API_BASE` set at **buildtime**, pointing
-   at the backend's deployed URL.
+Backend:
 
-## Adding future weeks
+- Base Directory `/backend`
+- port 4000
+- `DATABASE_URL`
+- `PORT=4000`
+- `ALLOWED_ORIGINS=*`
+- `PERSIST_RESPONSES` as required
 
-One `INSERT` into `activities`, no redeploy — same pattern as the likert
-repo. `options` is a JSON array (`'["A", "B", "C"]'::jsonb`); leave
-`correct_option` as `NULL` for an opinion question or set it to one of
-the option strings for a concept check.
+Frontend:
+
+- Base Directory `/frontend`
+- Publish Directory `/dist`
+- static site enabled
+- `VITE_API_BASE` available at build time and pointed at the deployed backend
+
+## Adding future activities
+
+Content remains database-driven. Add a row to `activities`; no frontend
+code change is required. `options` is a JSON array. Leave `correct_option`
+as `NULL` for open judgement/opinion activities or set it to a valid option
+for a concept check.

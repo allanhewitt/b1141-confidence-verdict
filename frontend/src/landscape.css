@@ -1,0 +1,295 @@
+/* Landscape-specific layer for the confidence-weighted verdict model. */
+
+.landscape-wrap {
+  max-width: 820px;
+  justify-content: flex-start;
+}
+
+.reveal-landscape-wrap {
+  padding-top: 34px;
+}
+
+.position-card,
+.personal-landscape-feedback,
+.reflection-prompt-card,
+.landscape-signals-card,
+.landscape-summary-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(16, 47, 85, 0.08);
+}
+
+.position-card {
+  padding: 20px;
+}
+
+.revealed-position-card {
+  border-top: 4px solid var(--gold);
+}
+
+.placement-copy {
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 0.9rem;
+  margin: -4px 0 20px;
+}
+
+.hidden-landscape-message {
+  margin-top: 16px;
+  padding: 15px 16px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #eef6ff, #f8fbff);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.45;
+}
+
+.hidden-landscape-message strong {
+  color: var(--navy);
+}
+
+.hidden-landscape-message span {
+  color: var(--muted);
+}
+
+.waiting-copy {
+  margin: 16px 2px 0;
+}
+
+/* The same map structure is visible before reveal, but the room is concealed. */
+.heatmap.hidden-space .heatmap-cell.concealed {
+  background: repeating-linear-gradient(
+    135deg,
+    #f7f9fb,
+    #f7f9fb 8px,
+    #eef2f6 8px,
+    #eef2f6 16px
+  );
+  border: 1px dashed #cad5df;
+}
+
+.heatmap.hidden-space .heatmap-cell.marked {
+  background: #fff7e7;
+  border: 1px solid #d9ad62;
+}
+
+.heatmap.hidden-space .heatmap-marker {
+  right: 50%;
+  top: 50%;
+  transform: translate(50%, -50%);
+  padding: 5px 8px;
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
+.personal-landscape-feedback {
+  margin-top: 18px;
+  padding: 22px;
+  border-top: 4px solid var(--blue);
+}
+
+.feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.feedback-stat {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 13px 14px;
+  background: #fbfcfe;
+}
+
+.feedback-stat span,
+.landscape-summary-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+}
+
+.feedback-stat strong,
+.landscape-summary-card strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--navy);
+  font-size: 1.05rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.feedback-stat small,
+.landscape-summary-card small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.interpretive-feedback {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 11px;
+  background: var(--light-blue);
+  line-height: 1.48;
+}
+
+.interpretive-feedback p {
+  margin: 6px 0;
+}
+
+.reflection-prompt-card {
+  margin-top: 18px;
+  padding: 20px 22px;
+}
+
+.reflection-prompt-card h2,
+.landscape-signals-card h2 {
+  margin: 5px 0 7px;
+  color: var(--navy);
+  font-size: 1.15rem;
+}
+
+.reflection-prompt-card p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* Lecturer */
+.landscape-status-grid {
+  grid-template-columns: repeat(4, minmax(145px, 1fr));
+}
+
+.landscape-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.landscape-summary-card {
+  padding: 14px 15px;
+}
+
+.revealed-dashboard-section {
+  margin-bottom: 16px;
+}
+
+.landscape-signals-card {
+  padding: 20px;
+}
+
+.landscape-signal-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.landscape-signal-list > div {
+  padding: 11px 13px;
+  border-left: 4px solid var(--gold);
+  border-radius: 7px;
+  background: #fffaf0;
+  line-height: 1.42;
+}
+
+/* Projector */
+.hidden-landscape-display {
+  display: flex;
+  flex-direction: column;
+}
+
+.hidden-display-header {
+  margin-bottom: 4px;
+}
+
+.hidden-map-panel {
+  max-width: 1180px;
+  width: 100%;
+  margin: 12px auto 0;
+  padding: 24px 28px;
+}
+
+.hidden-map-panel .heatmap {
+  font-size: 1.08em;
+}
+
+.display-progress-wrap {
+  max-width: 760px;
+  width: 100%;
+  margin: 22px auto 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.display-progress-wrap .display-progress {
+  margin-bottom: 8px;
+}
+
+.landscape-display-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.landscape-main-map {
+  margin-top: 18px;
+}
+
+.display-landscape-signals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0 0;
+}
+
+.display-landscape-signals > div {
+  background: white;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--gold);
+  border-radius: 10px;
+  padding: 12px 14px;
+  line-height: 1.35;
+  font-weight: 650;
+  color: var(--navy);
+}
+
+@media (max-width: 900px) {
+  .feedback-grid,
+  .landscape-summary-row,
+  .landscape-status-grid,
+  .landscape-display-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .display-landscape-signals {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .feedback-grid,
+  .landscape-summary-row,
+  .landscape-status-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .position-card,
+  .personal-landscape-feedback,
+  .reflection-prompt-card {
+    padding: 16px;
+  }
+
+  .landscape-wrap {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}

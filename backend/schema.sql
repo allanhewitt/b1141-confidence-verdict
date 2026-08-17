@@ -45,3 +45,18 @@ INSERT INTO activities (
   5, NULL,
   'threshold', 0.8, 45, true
 ) ON CONFLICT (id) DO NOTHING;
+
+-- Week Three seed: "Why this geography of cricket?"
+-- This is an initial causal judgement before Postcolonial Theory is introduced.
+-- Manual reveal lets the lecturer surface the class model after everyone commits.
+INSERT INTO activities (
+  id, module, week, activity, sequence,
+  question, options, confidence_points, correct_option,
+  reveal_mode, reveal_threshold, cohort_size, active
+) VALUES (
+  'b1141-w3-geography-of-cricket', 'B1141', 3, 'geography-of-cricket', 3,
+  'Which factor is the strongest explanation for why cricket became deeply established in South Asia, the Caribbean, East Africa and Australia, but not most of continental Europe?',
+  '["The game''s inherent appeal", "Modern media and commercialisation", "Patterns of economic development", "Historical British imperial relationships"]'::jsonb,
+  5, NULL,
+  'manual', NULL, 45, true
+) ON CONFLICT (id) DO NOTHING;

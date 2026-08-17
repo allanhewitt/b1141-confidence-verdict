@@ -112,6 +112,12 @@ export default function Respond() {
 
   const locked = submitted && !editing;
   const confidenceLevels = Array.from({ length: config.confidence_points }, (_, i) => i + 1);
+  const hiddenResultsMessage =
+    config.reveal_mode === "manual"
+      ? "Results will appear when your lecturer reveals the class response."
+      : config.reveal_mode === "threshold"
+      ? "Results will appear once enough of the class has responded."
+      : "Results will appear shortly.";
 
   return (
     <div className="wrap">
@@ -165,9 +171,7 @@ export default function Respond() {
                 correctOption={config.correct_option}
               />
             ) : (
-              <p className="muted">
-                Results will appear once enough of the class has responded.
-              </p>
+              <p className="muted">{hiddenResultsMessage}</p>
             )}
           </div>
           <button type="button" className="change-mind" onClick={() => setEditing(true)}>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Heatmap from "./Heatmap.jsx";
 
@@ -20,7 +20,7 @@ export default function Control() {
       .catch((e) => setError(e.message));
   }, [id]);
 
-  const fetchAggregate = useCallback(() => {
+  const refresh = useCallback(() => {
     fetch(`${API}/api/aggregate/confidence/${id}`)
       .then((r) => r.json())
       .then(setAggregate)
@@ -28,62 +28,97 @@ export default function Control() {
   }, [id]);
 
   useEffect(() => {
-    fetchAggregate();
-    const interval = setInterval(fetchAggregate, 2000);
+    refresh();
+    const interval = setInterval(refresh, 2000);
     return () => clearInterval(interval);
-  }, [fetchAggregate]);
+  }, [refresh]);
 
-  const reveal = () =>
-    fetch(`${API}/api/session/${id}/reveal`, { method: "POST" }).then(fetchAggregate);
-
-  const clear = () => {
-    if (!window.confirm("Clear all responses for this activity's live view?")) return;
-    fetch(`${API}/api/session/${id}/clear`, { method: "POST" }).then(fetchAggregate);
+  const reveal = async () => {
+    await fetch(`${API}/api/session/${id}/reveal`, { method: "POST" });
+    refresh();
   };
 
-  if (error) {
-    return (
-      <div className="wrap">
-        <p className="error">{error}</p>
-      </div>
-    );
-  }
+  const complete = async () => {
+    await fetch(`${API}/api/session/${id}/complete`, { method: "POST" });
+    refresh();
+  };
 
-  if (!config) {
-    return (
-      <div className="wrap">
-        <p className="muted">Loading…</p>
-      </div>
-    );
-  }
+  const clear = async () => {
+    if (!window.confirm("Clear the live session and return to initial collection?")) return;
+    await fetch(`${API}/api/session/${id}/clear`, { method: "POST" });
+    refresh();
+  };
+
+  if (error) return <div className="wrap"><p className="error">{error}</p></div>;
+  if (!config) return <div className="wrap"><p className="muted">Loading…</p></div>;
+
+  const phase = aggregate?.phase || "initial";
+  const movement = aggregate?.movement || {};
 
   return (
-    <div className="wrap wrap-wide">
+    <div className="control-shell">
+      <div className="activity-kicker">B1141 · Lecturer control · Week {config.week}</div>
       <h1>{config.question}</h1>
-      <p className="muted">
-        {aggregate?.total ?? 0} response{(aggregate?.total ?? 0) === 1 ? "" : "s"}
-        {config.cohort_size ? ` of ~${config.cohort_size}` : ""}
-      </p>
 
-      <div className="controls">
-        <button onClick={reveal}>Reveal now</button>
-        <button className="danger" onClick={clear}>
-          Clear session
-        </button>
+      <div className="control-status-grid">
+        <Status label="Phase" value={phaseLabel(phase)} />
+        <Status label="Initial responses" value={aggregate?.total ?? 0} />
+        <Status label="Resolved" value={`${aggregate?.resolved_count ?? 0} / ${aggregate?.total ?? 0}`} />
+        <Status label="Initial avg. confidence" value={fmt(aggregate?.initial_mean_confidence)} />
       </div>
 
-      {aggregate && (
-        <Heatmap
-          options={config.options}
-          confidencePoints={config.confidence_points}
-          matrix={aggregate.matrix}
-          correctOption={config.correct_option}
-        />
-      )}
+      <div className="control-toolbar">
+        <a className="projector-link" href={`#/display/${id}`} target="_blank" rel="noreferrer">Open projector display ↗</a>
+        {!aggregate?.revealed && <button onClick={reveal}>Reveal class picture</button>}
+        {aggregate?.revealed && !aggregate?.complete && <button onClick={complete}>Complete activity</button>}
+        <button className="danger" onClick={clear}>Clear session</button>
+      </div>
 
-      <p className="muted small">
-        {aggregate?.revealed ? "Visible to students." : "Not yet visible to students."}
-      </p>
+      {!aggregate?.revealed ? (
+        <section className="dashboard-section">
+          <div className="section-heading"><div><div className="eyebrow">Private lecturer view</div><h2>Responses arriving</h2></div></div>
+          <Heatmap options={config.options} confidencePoints={config.confidence_points} matrix={aggregate?.current_matrix || aggregate?.matrix || {}} correctOption={config.correct_option} />
+          <p className="muted small">Students cannot see this class picture until reveal.</p>
+        </section>
+      ) : (
+        <>
+          <section className="movement-summary">
+            <Movement label="Judgement only changed" value={movement.judgement_only || 0} />
+            <Movement label="Confidence only changed" value={movement.confidence_only || 0} />
+            <Movement label="Both changed" value={movement.both_changed || 0} />
+            <Movement label="Both retained" value={movement.neither_changed || 0} />
+          </section>
+
+          <div className="control-heatmap-grid">
+            <section className="dashboard-section">
+              <div className="section-heading"><div><div className="eyebrow">Frozen reveal</div><h2>Initial class picture</h2></div></div>
+              <Heatmap options={config.options} confidencePoints={config.confidence_points} matrix={aggregate?.initial_matrix || {}} correctOption={config.correct_option} />
+            </section>
+            <section className="dashboard-section">
+              <div className="section-heading"><div><div className="eyebrow">Live calibration</div><h2>Current class picture</h2></div></div>
+              <Heatmap options={config.options} confidencePoints={config.confidence_points} matrix={aggregate?.current_matrix || {}} correctOption={config.correct_option} />
+            </section>
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function Status({ label, value }) {
+  return <div className="status-card"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function Movement({ label, value }) {
+  return <div className="movement-card"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function phaseLabel(phase) {
+  if (phase === "revealed") return "Calibration open";
+  if (phase === "complete") return "Complete";
+  return "Initial judgement";
+}
+
+function fmt(value) {
+  return value == null ? "—" : Number(value).toFixed(1);
 }

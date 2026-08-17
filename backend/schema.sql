@@ -8,27 +8,35 @@ CREATE TABLE IF NOT EXISTS activities (
   activity TEXT NOT NULL,
   sequence INTEGER,
   question TEXT NOT NULL,
-  options JSONB NOT NULL,              -- e.g. ["Health", "Pride / belonging", ...]
+  options JSONB NOT NULL,
   confidence_points INTEGER NOT NULL DEFAULT 5,
-  correct_option TEXT,                 -- NULL for opinion questions; set for concept-checks
+  correct_option TEXT,
   reveal_mode TEXT NOT NULL DEFAULT 'threshold',
   reveal_threshold REAL,
   cohort_size INTEGER,
   active BOOLEAN NOT NULL DEFAULT true
 );
 
--- Every submission (initial or revised) gets its own row, same convention
--- as the likert-poll repo — respondent_token is anonymous, not identity,
--- and exists only so revisions can be grouped and the live view can show
--- one current answer per respondent rather than double-counting.
+-- Every submission is retained as an event when persistence is enabled.
+-- `phase` distinguishes the latest pre-reveal commitment from the explicit
+-- post-reveal calibration event; `reconsideration_scope` records what the
+-- learner chose to reopen (judgement, confidence, both, or neither).
 CREATE TABLE IF NOT EXISTS responses (
   id SERIAL PRIMARY KEY,
   activity_id TEXT NOT NULL REFERENCES activities(id),
   respondent_token TEXT NOT NULL,
   option TEXT NOT NULL,
   confidence INTEGER NOT NULL,
+  phase TEXT NOT NULL DEFAULT 'initial',
+  reconsideration_scope TEXT,
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Safe upgrade path for an already-created 2026-27 database.
+ALTER TABLE responses
+  ADD COLUMN IF NOT EXISTS phase TEXT NOT NULL DEFAULT 'initial';
+ALTER TABLE responses
+  ADD COLUMN IF NOT EXISTS reconsideration_scope TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_responses_activity ON responses(activity_id);
 CREATE INDEX IF NOT EXISTS idx_responses_token ON responses(activity_id, respondent_token);

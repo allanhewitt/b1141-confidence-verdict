@@ -5,12 +5,15 @@ on:
     branches:
       - stage3-cwd-backend
       - stage3-cwd-self-audit
+      - stage3-migration-automation
     paths:
       - "backend/**"
+      - "ops/**"
       - ".github/workflows/backend-checks.yml"
   pull_request:
     paths:
       - "backend/**"
+      - "ops/**"
       - ".github/workflows/backend-checks.yml"
 
 jobs:
@@ -45,6 +48,12 @@ jobs:
       - run: node --check stage3-cwd.js
       - run: node --check stage3-cwd-self-audit.js
       - run: node --check lib/cwd-self-audit.js
+      - name: Check migration runner syntax
+        working-directory: .
+        run: python3 -m py_compile ops/gedl-migrate.py
+      - name: Validate migration manifest hashes
+        working-directory: .
+        run: python3 ops/gedl-migrate.py --branch "$GITHUB_REF_NAME" validate-manifest --repo-root .
       - name: Build test database through migrations
         run: |
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql

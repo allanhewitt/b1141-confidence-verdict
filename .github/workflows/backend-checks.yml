@@ -1,0 +1,29 @@
+name: Backend checks
+
+on:
+  push:
+    branches:
+      - stage3-cwd-backend
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-checks.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-checks.yml"
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: node --check server.js
+      - run: node --check stage3-cwd.js
+      - run: npm test

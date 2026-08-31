@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gedl.local/schemas/cwd-activity-config.schema.json",
+  "title": "Confidence-Weighted Response activity configuration",
+  "description": "Version 1 semantic configuration contract for the Stage 3 social CWD engine. Physical storage is JSONB; this schema constrains the model-specific configuration independently of learner-facing presentation styling.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "judgement",
+    "evaluation",
+    "confidence",
+    "confrontation",
+    "guidance",
+    "resolution",
+    "lecturer"
+  ],
+  "properties": {
+    "judgement": { "$ref": "#/$defs/judgement" },
+    "evaluation": { "$ref": "#/$defs/evaluation" },
+    "confidence": { "$ref": "#/$defs/confidence" },
+    "confrontation": { "$ref": "#/$defs/confrontation" },
+    "guidance": { "$ref": "#/$defs/guidance" },
+    "resolution": { "$ref": "#/$defs/resolution" },
+    "lecturer": { "$ref": "#/$defs/lecturer" }
+  },
+  "$defs": {
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "order"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+        },
+        "label": { "type": "string", "minLength": 1 },
+        "order": { "type": "integer", "minimum": 1 },
+        "value": {
+          "description": "Optional semantic/numeric value for ordered or bipolar judgements.",
+          "type": ["number", "string", "null"]
+        }
+      }
+    },
+    "judgement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "semantics", "prompt", "options"],
+      "properties": {
+        "mode": { "const": "single" },
+        "semantics": {
+          "enum": ["categorical", "ordinal", "bipolar"]
+        },
+        "prompt": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 12,
+          "items": { "$ref": "#/$defs/option" }
+        }
+      }
+    },
+    "evaluation": {
+      "oneOf": [
+        {
+          "title": "Non-keyed evaluation",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "accepted_option_ids", "reveal_stage"],
+          "properties": {
+            "mode": { "const": "non_keyed" },
+            "accepted_option_ids": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "reveal_stage": { "const": "never" }
+          }
+        },
+        {
+          "title": "Keyed evaluation",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "accepted_option_ids", "reveal_stage"],
+          "properties": {
+            "mode": { "const": "keyed" },
+            "accepted_option_ids": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "reveal_stage": {
+              "enum": ["never", "confrontation", "guidance", "resolution"]
+            }
+          }
+        }
+      ]
+    },
+    "confidence": {
+      "oneOf": [
+        {
+          "title": "Confidence enabled",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "prompt", "scale_id"],
+          "properties": {
+            "enabled": { "const": true },
+            "prompt": { "type": "string", "minLength": 1 },
+            "scale_id": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "title": "Confidence disabled",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "const": false },
+            "prompt": { "type": ["string", "null"] },
+            "scale_id": { "type": ["string", "null"] }
+          }
+        }
+      ]
+    },
+    "confrontation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "reveal_mode", "required_outputs"],
+      "properties": {
+        "source": { "const": "cohort" },
+        "reveal_mode": {
+          "enum": ["lecturer_gated", "automatic"]
+        },
+        "automatic_rule": {
+          "type": ["string", "null"],
+          "enum": ["immediate", "threshold", null]
+        },
+        "threshold": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "expected_cohort_size": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "required_outputs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "response_count",
+              "judgement_distribution",
+              "confidence_by_judgement",
+              "overall_confidence",
+              "learner_original_position"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "reveal_mode": { "const": "lecturer_gated" } },
+            "required": ["reveal_mode"]
+          },
+          "then": {
+            "properties": {
+              "automatic_rule": { "type": "null" },
+              "threshold": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "reveal_mode": { "const": "automatic" },
+              "automatic_rule": { "const": "threshold" }
+            },
+            "required": ["reveal_mode", "automatic_rule"]
+          },
+          "then": {
+            "required": ["threshold", "expected_cohort_size"],
+            "properties": {
+              "threshold": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+              "expected_cohort_size": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "guidanceBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": {
+          "enum": [
+            "bridge",
+            "evidence",
+            "comparison",
+            "stakeholder_prompt",
+            "diagnostic_cue",
+            "source_reference"
+          ]
+        },
+        "text": { "type": "string", "minLength": 1 },
+        "source_id": { "type": ["string", "null"] }
+      }
+    },
+    "guidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "content"],
+      "properties": {
+        "source": {
+          "enum": ["in_app", "teaching_interlude", "none"]
+        },
+        "content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/guidanceBlock" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "source": { "const": "in_app" } },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "content": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "source": { "const": "none" } },
+            "required": ["source"]
+          },
+          "then": {
+            "properties": {
+              "content": { "maxItems": 0 }
+            }
+          }
+        }
+      ]
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "release",
+        "allow_revised_judgement",
+        "reassess_confidence"
+      ],
+      "properties": {
+        "profile": {
+          "enum": ["confidence_shift", "retain_qualify_revise"]
+        },
+        "release": {
+          "enum": ["immediate", "lecturer_controlled"]
+        },
+        "allow_revised_judgement": { "type": "boolean" },
+        "reassess_confidence": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "const": "conditional" }
+          ]
+        }
+      }
+    },
+    "lecturer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pre_reveal_view",
+        "reveal_control",
+        "resolution_control",
+        "post_reveal_metrics",
+        "projector_summary",
+        "reset_session"
+      ],
+      "properties": {
+        "pre_reveal_view": {
+          "enum": ["response_count_only", "configured_summary"]
+        },
+        "reveal_control": {
+          "enum": ["manual", "automatic"]
+        },
+        "resolution_control": {
+          "enum": ["immediate", "lecturer_reopen"]
+        },
+        "post_reveal_metrics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "projector_summary": { "type": "boolean" },
+        "reset_session": { "type": "boolean" }
+      }
+    }
+  }
+}

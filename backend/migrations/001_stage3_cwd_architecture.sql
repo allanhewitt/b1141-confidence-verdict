@@ -11,8 +11,10 @@
 --   * the legacy responses table is retained;
 --   * existing server/frontend code can continue to operate until the
 --     application is explicitly switched to the Stage 3 path;
---   * legacy keyed activities default to reveal_stage='never' during backfill
---     so that answer disclosure is never introduced accidentally.
+--   * only an explicitly audited CWD development instance is backfilled;
+--   * other legacy activity rows remain unclassified until reconciled against
+--     the current model repertoire;
+--   * keyed activities must never acquire answer disclosure automatically.
 
 BEGIN;
 
@@ -21,7 +23,7 @@ BEGIN;
 -- ---------------------------------------------------------------------------
 
 ALTER TABLE activities
-  ADD COLUMN IF NOT EXISTS model TEXT NOT NULL DEFAULT 'confidence_weighted_response';
+  ADD COLUMN IF NOT EXISTS model TEXT;
 
 ALTER TABLE activities
   ADD COLUMN IF NOT EXISTS variant TEXT;
@@ -41,16 +43,15 @@ ALTER TABLE activities
 ALTER TABLE activities
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 
--- Current Stage 3 scope is deliberately bounded to the two validated social
--- variants. self_audit remains a recognised future extension, not part of this
--- implementation migration.
+-- Current CWD Stage 3 scope is deliberately bounded to the two validated
+-- social variants. The constraint applies only when a row is classified as CWD.
 ALTER TABLE activities
   DROP CONSTRAINT IF EXISTS chk_cwd_variant;
 
 ALTER TABLE activities
   ADD CONSTRAINT chk_cwd_variant
   CHECK (
-    variant IS NULL
+    model IS DISTINCT FROM 'confidence_weighted_response'
     OR variant IN ('social_immediate', 'social_delayed')
   );
 
@@ -185,19 +186,24 @@ CREATE INDEX IF NOT EXISTS idx_response_traces_committed_option
   WHERE committed_at IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
--- 5. Conservative semantic backfill for existing CWD activity rows.
+-- 5. Conservative semantic backfill: one audited CWD development instance.
 -- ---------------------------------------------------------------------------
 --
--- Where legacy fields map unambiguously, create a schema-version-1 config.
--- Guidance and resolution content are deliberately left as neutral placeholders
--- for later Stage 4 authoring where an instance has not yet been parameterised.
--- Existing keyed activities never acquire answer disclosure automatically:
--- reveal_stage defaults to 'never'.
+-- The repository contains legacy activities whose model classification may no
+-- longer match the current GEDL repertoire. Stage 3 therefore does not infer
+-- CWD membership from repository location. Only the explicitly audited
+-- development instance is classified/backfilled here.
+--
+-- "Who Is Excluded?" is the approved CWD development instance. It is non-keyed
+-- and currently uses the social_immediate variant. Guidance/resolution content
+-- remains configuration data and can be enriched as the engine is wired to the
+-- canonical Stage 2 instance specification.
 
 UPDATE activities
 SET
-  variant = COALESCE(variant, 'social_immediate'),
-  title = COALESCE(title, question),
+  model = 'confidence_weighted_response',
+  variant = 'social_immediate',
+  title = COALESCE(title, 'Who Is Excluded?'),
   config = COALESCE(
     config,
     jsonb_build_object(
@@ -217,27 +223,11 @@ SET
           FROM jsonb_array_elements_text(options) WITH ORDINALITY AS legacy(value, ordinality)
         )
       ),
-      'evaluation', CASE
-        WHEN correct_option IS NULL THEN
-          jsonb_build_object(
-            'mode', 'non_keyed',
-            'accepted_option_ids', jsonb_build_array(),
-            'reveal_stage', 'never'
-          )
-        ELSE
-          jsonb_build_object(
-            'mode', 'keyed',
-            'accepted_option_ids', COALESCE(
-              (
-                SELECT jsonb_agg('option_' || ordinality ORDER BY ordinality)
-                FROM jsonb_array_elements_text(options) WITH ORDINALITY AS legacy(value, ordinality)
-                WHERE value = correct_option
-              ),
-              '[]'::jsonb
-            ),
-            'reveal_stage', 'never'
-          )
-      END,
+      'evaluation', jsonb_build_object(
+        'mode', 'non_keyed',
+        'accepted_option_ids', jsonb_build_array(),
+        'reveal_stage', 'never'
+      ),
       'confidence', jsonb_build_object(
         'enabled', true,
         'prompt', 'How confident are you in your judgement?',
@@ -269,7 +259,7 @@ SET
         )
       ),
       'guidance', jsonb_build_object(
-        'source', 'none',
+        'source', 'in_app',
         'content', jsonb_build_array()
       ),
       'resolution', jsonb_build_object(
@@ -293,7 +283,11 @@ SET
   ),
   schema_version = 1,
   updated_at = now()
-WHERE model = 'confidence_weighted_response';
+WHERE id = 'b1141-w1-least-shared-benefit';
+
+-- No other legacy activity is classified automatically. This query should
+-- return the rows still requiring explicit model reconciliation after migration:
+-- SELECT id, module, week, activity, question FROM activities WHERE model IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- 6. Indexes useful for configuration lookup.
@@ -315,6 +309,8 @@ COMMIT;
 -- ORDER BY module, week, sequence;
 --
 -- SELECT id, name, points FROM confidence_scales;
+--
+-- SELECT id, module, week, activity FROM activities WHERE model IS NULL;
 --
 -- \d activity_sessions
 -- \d response_traces

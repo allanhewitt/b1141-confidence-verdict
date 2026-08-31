@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import pg from "pg";
 import { createStage3CwdRouter } from "./stage3-cwd.js";
+import { createStage3CwdSelfAuditRouter } from "./stage3-cwd-self-audit.js";
 
 const { Pool } = pg;
 
@@ -230,15 +231,10 @@ app.post("/api/response/confidence/:id", async (req, res) => {
   const session = getSession(req.params.id);
   const response = { option, confidence };
 
-  // Existing pre-reveal participants may reposition themselves. Once the
-  // landscape has been revealed, their committed position is locked because
-  // that is the position to which the feedback refers.
   if (session.revealed && session.snapshot?.[token]) {
     return res.status(409).json({ error: "Your position was locked when the class landscape was revealed" });
   }
 
-  // Late participants may still place themselves after reveal. They receive
-  // personal feedback against the frozen class landscape, but do not alter it.
   session.responses[token] = response;
   await persistResponse(req.params.id, token, response);
 
@@ -298,9 +294,6 @@ app.get("/api/personal/confidence/:id", async (req, res) => {
     return res.json({ revealed: false, position });
   }
 
-  // Compare the learner with the frozen cohort. If they were part of that
-  // snapshot, exclude them from their own peer statistics. If they arrived
-  // after reveal, the whole snapshot is their peer landscape.
   const peerEntries = Object.entries(session.snapshot || {})
     .filter(([peerToken]) => peerToken !== token)
     .map(([, response]) => response);
@@ -336,12 +329,16 @@ app.post("/api/session/:id/clear", (req, res) => {
   res.json({ ok: true });
 });
 
-// The Stage 3 persistent engine is mounted alongside, not instead of, the
-// legacy routes. It remains unreachable unless explicitly enabled.
+// The Stage 3 persistent engines are mounted alongside, not instead of, the
+// legacy routes. They remain unreachable unless explicitly enabled.
 if (ENABLE_STAGE3_CWD) {
   app.use(
     "/api/cwd",
     createStage3CwdRouter({ pool, lecturerKey: CWD_LECTURER_KEY })
+  );
+  app.use(
+    "/api/cwd/audit",
+    createStage3CwdSelfAuditRouter({ pool, lecturerKey: CWD_LECTURER_KEY })
   );
 }
 
@@ -353,9 +350,6 @@ app.get("/api/health", (req, res) =>
   })
 );
 
-// Keep the additive columns introduced by the earlier calibration prototype.
-// They are harmless for existing databases and avoid destructive migrations;
-// this legacy model path writes only phase='initial'.
 async function ensureSchema() {
   await pool.query(`
     ALTER TABLE responses

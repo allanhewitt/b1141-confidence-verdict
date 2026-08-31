@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "application": "b1141-confidence-verdict",
+  "database": "b1141_confidence_verdict",
+  "migrations": [
+    {
+      "id": "001",
+      "filename": "001_stage3_cwd_architecture.sql",
+      "path": "backend/migrations/001_stage3_cwd_architecture.sql",
+      "git_blob_sha": "b209b735e0a7ff97eb80cbc6450b6dec9b7da73d",
+      "description": "Create the Stage 3 CWD physical architecture and canonical Week 1 activity",
+      "verify_sql": "SELECT (to_regclass('public.activity_sessions') IS NOT NULL AND to_regclass('public.response_traces') IS NOT NULL AND to_regclass('public.confidence_scales') IS NOT NULL AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='activities' AND column_name='config') AND EXISTS (SELECT 1 FROM activities WHERE id='b1141-w1-who-is-excluded' AND model='confidence_weighted_response'));",
+      "verify_expected": "t"
+    },
+    {
+      "id": "002",
+      "filename": "002_cwd_session_snapshots.sql",
+      "path": "backend/migrations/002_cwd_session_snapshots.sql",
+      "git_blob_sha": "7a40bfa4aaf7c9e599afa2d5a0b35eadd3f8ce26",
+      "description": "Add immutable CWD session semantic snapshots and one-open-session protection",
+      "verify_sql": "SELECT ((SELECT COUNT(*) FROM information_schema.columns WHERE table_name='activity_sessions' AND column_name IN ('model_snapshot','variant_snapshot','config_snapshot','schema_version_snapshot','confidence_scale_snapshot')) = 5 AND EXISTS (SELECT 1 FROM pg_indexes WHERE tablename='activity_sessions' AND indexname='uq_activity_sessions_one_open'));",
+      "verify_expected": "t"
+    },
+    {
+      "id": "003",
+      "filename": "003_cwd_self_audit_variant.sql",
+      "path": "backend/migrations/003_cwd_self_audit_variant.sql",
+      "git_blob_sha": "f12b3ef66cb8b9fc06153a21894cf0e715fa1ae9",
+      "description": "Extend CWD with the bounded self_audit diagnostic variant",
+      "verify_sql": "SELECT ((SELECT COUNT(*) FROM information_schema.columns WHERE table_name='response_traces' AND column_name IN ('committed_diagnostic_profile','diagnostic_target_id','final_diagnostic_profile')) = 3 AND EXISTS (SELECT 1 FROM activities WHERE id='b1141-w9-audit-own-confidence' AND variant='self_audit' AND active=false));",
+      "verify_expected": "t"
+    },
+    {
+      "id": "004",
+      "filename": "004_cwd_b1141_activity_repertoire.sql",
+      "path": "backend/migrations/004_cwd_b1141_activity_repertoire.sql",
+      "git_blob_sha": "5a634e01dac5c4ebfa5626a282e5c8534af7603c",
+      "description": "Populate the remaining four canonical B1141 social CWD activity configurations",
+      "verify_sql": "SELECT (COUNT(*) = 4 AND bool_and(active = false)) FROM activities WHERE id IN ('b1141-w2-bad-apple-or-system-cwd','b1141-w5-biometric-data','b1141-w6-sky-premier-league-1992','b1141-w7-universal-code');",
+      "verify_expected": "t"
+    }
+  ],
+  "postflight": [
+    {"name": "total_activities", "sql": "SELECT COUNT(*) FROM activities;"},
+    {"name": "canonical_cwd", "sql": "SELECT COUNT(*) FROM activities WHERE model='confidence_weighted_response';"},
+    {"name": "active_canonical_cwd", "sql": "SELECT COUNT(*) FROM activities WHERE model='confidence_weighted_response' AND active;"},
+    {"name": "legacy_unclassified", "sql": "SELECT COUNT(*) FROM activities WHERE model IS NULL;"},
+    {"name": "legacy_responses", "sql": "SELECT COUNT(*) FROM responses;"},
+    {"name": "stage3_sessions", "sql": "SELECT COUNT(*) FROM activity_sessions;"},
+    {"name": "stage3_traces", "sql": "SELECT COUNT(*) FROM response_traces;"}
+  ]
+}

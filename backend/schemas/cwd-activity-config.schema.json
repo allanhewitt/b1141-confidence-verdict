@@ -2,10 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://gedl.local/schemas/cwd-activity-config.schema.json",
   "title": "Confidence-Weighted Response activity configuration",
-  "description": "Version 1 semantic configuration contract for the Stage 3 social CWD engine. Physical storage is JSONB; this schema constrains the model-specific configuration independently of learner-facing presentation styling.",
+  "description": "Version 1 semantic configuration contract for the Stage 3 social CWD engine. Physical storage is JSONB; this schema constrains model-specific behaviour and learner-facing semantic content independently of presentation styling.",
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "entry",
     "judgement",
     "evaluation",
     "confidence",
@@ -15,6 +16,7 @@
     "lecturer"
   ],
   "properties": {
+    "entry": { "$ref": "#/$defs/entry" },
     "judgement": { "$ref": "#/$defs/judgement" },
     "evaluation": { "$ref": "#/$defs/evaluation" },
     "confidence": { "$ref": "#/$defs/confidence" },
@@ -24,6 +26,14 @@
     "lecturer": { "$ref": "#/$defs/lecturer" }
   },
   "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
     "option": {
       "type": "object",
       "additionalProperties": false,
@@ -255,6 +265,8 @@
       "required": [
         "profile",
         "release",
+        "prompt",
+        "options",
         "allow_revised_judgement",
         "reassess_confidence"
       ],
@@ -264,6 +276,13 @@
         },
         "release": {
           "enum": ["immediate", "lecturer_controlled"]
+        },
+        "prompt": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/option" }
         },
         "allow_revised_judgement": { "type": "boolean" },
         "reassess_confidence": {

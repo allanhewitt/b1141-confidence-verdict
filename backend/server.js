@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import pg from "pg";
+import { createStage3CwdRouter } from "./stage3-cwd.js";
 
 const { Pool } = pg;
 
@@ -18,11 +19,15 @@ app.use(cors({ origin: corsOrigin }));
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const PERSIST_RESPONSES = process.env.PERSIST_RESPONSES === "true";
+const ENABLE_STAGE3_CWD = process.env.ENABLE_STAGE3_CWD === "true";
+const CWD_LECTURER_KEY = process.env.CWD_LECTURER_KEY || "";
 
 // The live mechanic is a hidden two-dimensional space. Before reveal,
 // learners may reposition themselves. At reveal, the cohort landscape is
 // frozen. The point is then to locate and interpret one's position in that
 // landscape, not to optimise or change it afterwards.
+//
+// This legacy in-memory path remains intact during the Stage 3 transition.
 const sessionStore = new Map();
 
 function emptySession() {
@@ -331,11 +336,26 @@ app.post("/api/session/:id/clear", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true, persisting: PERSIST_RESPONSES }));
+// The Stage 3 persistent engine is mounted alongside, not instead of, the
+// legacy routes. It remains unreachable unless explicitly enabled.
+if (ENABLE_STAGE3_CWD) {
+  app.use(
+    "/api/cwd",
+    createStage3CwdRouter({ pool, lecturerKey: CWD_LECTURER_KEY })
+  );
+}
+
+app.get("/api/health", (req, res) =>
+  res.json({
+    ok: true,
+    persisting: PERSIST_RESPONSES,
+    stage3_cwd_enabled: ENABLE_STAGE3_CWD,
+  })
+);
 
 // Keep the additive columns introduced by the earlier calibration prototype.
 // They are harmless for existing databases and avoid destructive migrations;
-// this model now writes only phase='initial'.
+// this legacy model path writes only phase='initial'.
 async function ensureSchema() {
   await pool.query(`
     ALTER TABLE responses
@@ -350,7 +370,9 @@ const PORT = process.env.PORT || 4000;
 async function start() {
   await ensureSchema();
   app.listen(PORT, () =>
-    console.log(`Confidence-verdict API listening on :${PORT} (persist=${PERSIST_RESPONSES})`)
+    console.log(
+      `Confidence-verdict API listening on :${PORT} (persist=${PERSIST_RESPONSES}, stage3_cwd=${ENABLE_STAGE3_CWD})`
+    )
   );
 }
 

@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gedl.local/schemas/cwd-self-audit-config.schema.json",
+  "title": "Confidence-Weighted Response self-audit activity configuration",
+  "description": "Version 1 semantic contract for the bounded CWD self_audit variant. The learner commits a multi-item diagnostic profile, confronts the weakest area in their own profile, receives targeted guidance, and rerates that capability.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["entry", "judgement", "evaluation", "confidence", "confrontation", "guidance", "resolution", "lecturer"],
+  "properties": {
+    "entry": { "$ref": "#/$defs/entry" },
+    "judgement": { "$ref": "#/$defs/judgement" },
+    "evaluation": { "$ref": "#/$defs/evaluation" },
+    "confidence": { "$ref": "#/$defs/confidence" },
+    "confrontation": { "$ref": "#/$defs/confrontation" },
+    "guidance": { "$ref": "#/$defs/guidance" },
+    "resolution": { "$ref": "#/$defs/resolution" },
+    "lecturer": { "$ref": "#/$defs/lecturer" }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text"],
+      "properties": { "text": { "type": "string", "minLength": 1 } }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "order"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "label": { "type": "string", "minLength": 1 },
+        "order": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "ratingPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "label"],
+      "properties": {
+        "value": { "type": "integer", "minimum": 0 },
+        "label": { "type": "string", "minLength": 1 }
+      }
+    },
+    "ratingScale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "points"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "points": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 7,
+          "items": { "$ref": "#/$defs/ratingPoint" }
+        }
+      }
+    },
+    "judgement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "semantics", "prompt", "items", "scale"],
+      "properties": {
+        "mode": { "const": "multi_item" },
+        "semantics": { "const": "diagnostic_rating" },
+        "prompt": { "type": "string", "minLength": 1 },
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/item" }
+        },
+        "scale": { "$ref": "#/$defs/ratingScale" }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "accepted_option_ids", "reveal_stage"],
+      "properties": {
+        "mode": { "const": "non_keyed" },
+        "accepted_option_ids": { "type": "array", "maxItems": 0 },
+        "reveal_stage": { "const": "never" }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "const": false },
+        "prompt": { "type": ["string", "null"] },
+        "scale_id": { "type": ["string", "null"] }
+      }
+    },
+    "confrontation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "reveal_mode", "target_selection", "required_outputs"],
+      "properties": {
+        "source": { "const": "self_diagnostic" },
+        "reveal_mode": { "const": "not_applicable" },
+        "target_selection": { "const": "lowest_or_learner_choice_on_tie" },
+        "required_outputs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["personal_profile", "lowest_rated_items"] }
+        }
+      }
+    },
+    "guidanceBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target_item_id", "text"],
+      "properties": {
+        "type": { "const": "diagnostic_cue" },
+        "target_item_id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+    "guidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "content"],
+      "properties": {
+        "source": { "const": "targeted_diagnostic" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/guidanceBlock" }
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "release", "prompt", "allow_same_rating"],
+      "properties": {
+        "profile": { "const": "diagnostic_rerating" },
+        "release": { "const": "immediate" },
+        "prompt": { "type": "string", "minLength": 1 },
+        "allow_same_rating": { "type": "boolean" }
+      }
+    },
+    "lecturer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["aggregate_view", "post_metrics", "projector_summary", "reset_session"],
+      "properties": {
+        "aggregate_view": { "const": "diagnostic_needs" },
+        "post_metrics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["rating_distribution_by_item", "target_count_by_item"] }
+        },
+        "projector_summary": { "const": false },
+        "reset_session": { "type": "boolean" }
+      }
+    }
+  }
+}

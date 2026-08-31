@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - stage3-cwd-backend
+      - stage3-cwd-self-audit
     paths:
       - "backend/**"
       - ".github/workflows/backend-checks.yml"
@@ -42,9 +43,12 @@ jobs:
       - run: npm install
       - run: node --check server.js
       - run: node --check stage3-cwd.js
+      - run: node --check stage3-cwd-self-audit.js
+      - run: node --check lib/cwd-self-audit.js
       - name: Build test database through migrations
         run: |
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/001_stage3_cwd_architecture.sql
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/002_cwd_session_snapshots.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/003_cwd_self_audit_variant.sql
       - run: npm test

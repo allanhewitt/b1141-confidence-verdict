@@ -35,6 +35,7 @@ jobs:
           --health-retries 5
     env:
       TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/b1141_confidence_verdict_test
+      MIGRATION_VALIDATION_REF: ${{ github.head_ref || github.ref_name }}
     defaults:
       run:
         working-directory: backend
@@ -53,7 +54,7 @@ jobs:
         run: python3 -m py_compile ops/gedl-migrate.py
       - name: Validate migration manifest hashes
         working-directory: .
-        run: python3 ops/gedl-migrate.py --branch "$GITHUB_REF_NAME" validate-manifest --repo-root .
+        run: python3 ops/gedl-migrate.py --branch "$MIGRATION_VALIDATION_REF" validate-manifest --repo-root .
       - name: Build test database through migrations
         run: |
           psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql

@@ -1,0 +1,7 @@
+.cwd-presentation-count > strong {
+  margin-top: -1.2rem;
+  color: var(--cwd-ink);
+  font-size: clamp(4rem, 9vw, 9rem);
+  line-height: 0.86;
+  letter-spacing: -0.065em;
+}

@@ -7,6 +7,7 @@ import Display from "./Display.jsx";
 import { profileProps } from "./cwd/visual-profile.js";
 import "./styles.css";
 import "./cwd/cwd.css";
+import "./cwd/presentation.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -4,8 +4,9 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import Respond from "./Respond.jsx";
 import Control from "./Control.jsx";
 import Display from "./Display.jsx";
+import { profileProps } from "./cwd/visual-profile.js";
 import "./styles.css";
-import "./landscape.css";
+import "./cwd/cwd.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -17,11 +18,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route
           path="*"
           element={
-            <div className="wrap">
-              <p className="muted">
-                Open /#/respond/&#123;activity-id&#125;, /#/control/&#123;activity-id&#125; or /#/display/&#123;activity-id&#125;.
-              </p>
-            </div>
+            <main {...profileProps()} className="cwd-student cwd-student--centred">
+              <h1>Open an activity link to begin.</h1>
+            </main>
           }
         />
       </Routes>

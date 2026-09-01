@@ -57,6 +57,11 @@ export async function loadSessionState(activity, sessionId) {
   return request(`${activityBase(activity)}/sessions/${encodeURIComponent(sessionId)}/state`);
 }
 
+export async function loadResponseCount(activity, sessionId) {
+  if (activity?.variant === "self_audit") return null;
+  return request(`/api/cwd/sessions/${encodeURIComponent(sessionId)}/count`);
+}
+
 export async function loadPersonal(activity, sessionId, token) {
   return request(
     `${activityBase(activity)}/sessions/${encodeURIComponent(sessionId)}/personal?token=${encodeURIComponent(token)}`

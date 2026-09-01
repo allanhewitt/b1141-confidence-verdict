@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { loadAggregate, loadSessionState } from "./api.js";
+import { loadAggregate, loadResponseCount, loadSessionState } from "./api.js";
 import CwdField from "./CwdField.jsx";
 import { profileProps } from "./visual-profile.js";
 
 export default function PresentationView({ activity, initialSession }) {
   const [session, setSession] = useState(initialSession);
   const [aggregate, setAggregate] = useState(null);
+  const [responseCount, setResponseCount] = useState(0);
   const [error, setError] = useState("");
 
   const refresh = useCallback(async () => {
@@ -14,8 +15,12 @@ export default function PresentationView({ activity, initialSession }) {
       const state = await loadSessionState(activity, initialSession.id);
       setSession(state);
       if (activity.variant !== "self_audit") {
-        const nextAggregate = await loadAggregate(activity, initialSession.id);
+        const [nextAggregate, nextCount] = await Promise.all([
+          loadAggregate(activity, initialSession.id),
+          loadResponseCount(activity, initialSession.id),
+        ]);
         setAggregate(nextAggregate);
+        setResponseCount(nextCount?.count ?? 0);
       }
     } catch (refreshError) {
       setError(refreshError.message);
@@ -74,7 +79,8 @@ export default function PresentationView({ activity, initialSession }) {
               <span />
               <i />
             </div>
-            <p>Responses are coming in.</p>
+            <strong>{responseCount}</strong>
+            <p>{responseCount === 1 ? "response in" : "responses in"}</p>
           </section>
         </div>
       </main>

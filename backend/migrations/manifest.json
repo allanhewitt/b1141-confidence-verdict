@@ -38,15 +38,45 @@
       "description": "Populate the remaining four canonical B1141 social CWD activity configurations",
       "verify_sql": "SELECT (COUNT(*) = 4 AND bool_and(active = false)) FROM activities WHERE id IN ('b1141-w2-bad-apple-or-system-cwd','b1141-w5-biometric-data','b1141-w6-sky-premier-league-1992','b1141-w7-universal-code');",
       "verify_expected": "t"
+    },
+    {
+      "id": "005",
+      "filename": "005_cwd_stage4_b1141_academic_revisions.sql",
+      "path": "backend/migrations/005_cwd_stage4_b1141_academic_revisions.sql",
+      "git_blob_sha": "5fcdad0c4e063dcbc920e373bbb5e3f3373298e9",
+      "description": "Apply Stage 4 academic language and configuration revisions to all six inactive B1141 CWD instances",
+      "verify_sql": "SELECT (COUNT(*) = 6 AND bool_and(active = false) AND bool_and(config IS NOT NULL)) FROM activities WHERE id IN ('b1141-w1-who-is-excluded','b1141-w2-bad-apple-or-system-cwd','b1141-w5-biometric-data','b1141-w6-sky-premier-league-1992','b1141-w7-universal-code','b1141-w9-audit-own-confidence') AND model='confidence_weighted_response';",
+      "verify_expected": "t"
     }
   ],
   "postflight": [
-    {"name": "total_activities", "sql": "SELECT COUNT(*) FROM activities;"},
-    {"name": "canonical_cwd", "sql": "SELECT COUNT(*) FROM activities WHERE model='confidence_weighted_response';"},
-    {"name": "active_canonical_cwd", "sql": "SELECT COUNT(*) FROM activities WHERE model='confidence_weighted_response' AND active;"},
-    {"name": "legacy_unclassified", "sql": "SELECT COUNT(*) FROM activities WHERE model IS NULL;"},
-    {"name": "legacy_responses", "sql": "SELECT COUNT(*) FROM responses;"},
-    {"name": "stage3_sessions", "sql": "SELECT COUNT(*) FROM activity_sessions;"},
-    {"name": "stage3_traces", "sql": "SELECT COUNT(*) FROM response_traces;"}
+    {
+      "name": "total_activities",
+      "sql": "SELECT COUNT(*) FROM activities;"
+    },
+    {
+      "name": "canonical_cwd",
+      "sql": "SELECT COUNT(*) FROM activities WHERE model='confidence_weighted_response';"
+    },
+    {
+      "name": "active_canonical_cwd",
+      "sql": "SELECT COUNT(*) FROM activities WHERE model='confidence_weighted_response' AND active;"
+    },
+    {
+      "name": "legacy_unclassified",
+      "sql": "SELECT COUNT(*) FROM activities WHERE model IS NULL;"
+    },
+    {
+      "name": "legacy_responses",
+      "sql": "SELECT COUNT(*) FROM responses;"
+    },
+    {
+      "name": "stage3_sessions",
+      "sql": "SELECT COUNT(*) FROM activity_sessions;"
+    },
+    {
+      "name": "stage3_traces",
+      "sql": "SELECT COUNT(*) FROM response_traces;"
+    }
   ]
 }

@@ -5,8 +5,9 @@ import SocialStudent from "./cwd/SocialStudent.jsx";
 import SelfAuditStudent from "./cwd/SelfAuditStudent.jsx";
 import { profileProps } from "./cwd/visual-profile.js";
 
-export default function Respond() {
-  const { id } = useParams();
+export default function Respond({ activityId = null }) {
+  const { id: routeId } = useParams();
+  const id = activityId || routeId;
   const [activity, setActivity] = useState(null);
   const [session, setSession] = useState(null);
   const [status, setStatus] = useState("loading");

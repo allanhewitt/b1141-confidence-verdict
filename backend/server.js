@@ -332,6 +332,28 @@ app.post("/api/session/:id/clear", (req, res) => {
 // The Stage 3 persistent engines are mounted alongside, not instead of, the
 // legacy routes. They remain unreachable unless explicitly enabled.
 if (ENABLE_STAGE3_CWD) {
+  // Public presentation status exposes participation count only. It deliberately
+  // does not expose the hidden response distribution before reveal.
+  app.get("/api/cwd/sessions/:sessionId/count", async (req, res, next) => {
+    try {
+      const { rows } = await pool.query(
+        `SELECT COUNT(rt.id)::int AS count
+           FROM activity_sessions s
+           JOIN activities a ON a.id = s.activity_id
+           LEFT JOIN response_traces rt
+             ON rt.session_id = s.id
+            AND rt.current_option_id IS NOT NULL
+          WHERE s.id = $1
+            AND a.model = 'confidence_weighted_response'
+            AND a.variant IN ('social_immediate', 'social_delayed')`,
+        [req.params.sessionId]
+      );
+      res.json({ count: rows[0]?.count ?? 0 });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.use(
     "/api/cwd",
     createStage3CwdRouter({ pool, lecturerKey: CWD_LECTURER_KEY })

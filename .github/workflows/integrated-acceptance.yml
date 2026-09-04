@@ -1,0 +1,137 @@
+name: Integrated Stage 3 acceptance
+
+on:
+  push:
+    branches:
+      - stage3-cwd-integrated-acceptance
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/integrated-acceptance.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/integrated-acceptance.yml"
+
+jobs:
+  cwd-stage3-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: b1141_confidence_verdict_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d b1141_confidence_verdict_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/b1141_confidence_verdict_e2e
+      E2E_LECTURER_KEY: stage3-e2e-facilitator-key
+      E2E_API_BASE: http://127.0.0.1:4000
+      E2E_BASE_URL: http://127.0.0.1:4173
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Audit production frontend dependencies
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Install Chromium for Playwright
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Build migrated acceptance database
+        working-directory: backend
+        run: |
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f schema.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/001_stage3_cwd_architecture.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/002_cwd_session_snapshots.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/003_cwd_self_audit_variant.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/004_cwd_b1141_activity_repertoire.sql
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          UPDATE activities
+             SET active = true
+           WHERE id IN (
+             'b1141-w1-who-is-excluded',
+             'b1141-w2-bad-apple-or-system-cwd',
+             'b1141-w9-audit-own-confidence'
+           );
+          SQL
+
+      - name: Start Stage 3 backend
+        run: |
+          cd backend
+          DATABASE_URL="$TEST_DATABASE_URL" \
+          ENABLE_STAGE3_CWD=true \
+          CWD_LECTURER_KEY="$E2E_LECTURER_KEY" \
+          PERSIST_RESPONSES=false \
+          ALLOWED_ORIGINS="$E2E_BASE_URL" \
+          PORT=4000 \
+          npm start > /tmp/cwd-backend.log 2>&1 &
+          echo $! > /tmp/cwd-backend.pid
+          for i in $(seq 1 40); do
+            if curl -fsS "$E2E_API_BASE/api/health" >/tmp/cwd-health.json; then
+              cat /tmp/cwd-health.json
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/cwd-backend.log
+          exit 1
+
+      - name: Build production frontend against acceptance backend
+        working-directory: frontend
+        env:
+          VITE_API_BASE: http://127.0.0.1:4000
+        run: npm run build
+
+      - name: Start production-built frontend
+        run: |
+          cd frontend
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/cwd-frontend.log 2>&1 &
+          echo $! > /tmp/cwd-frontend.pid
+          for i in $(seq 1 40); do
+            if curl -fsS "$E2E_BASE_URL" >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/cwd-frontend.log
+          exit 1
+
+      - name: Run W1 W2 W9 three-surface browser acceptance
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          echo "--- backend ---"
+          cat /tmp/cwd-backend.log || true
+          echo "--- frontend ---"
+          cat /tmp/cwd-frontend.log || true
+
+      - name: Stop acceptance services
+        if: always()
+        run: |
+          test ! -f /tmp/cwd-frontend.pid || kill "$(cat /tmp/cwd-frontend.pid)" || true
+          test ! -f /tmp/cwd-backend.pid || kill "$(cat /tmp/cwd-backend.pid)" || true

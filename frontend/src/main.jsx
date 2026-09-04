@@ -8,6 +8,7 @@ import { resolvePublicActivityAlias } from "./cwd/public-aliases.js";
 import { profileProps } from "./cwd/visual-profile.js";
 import "./styles.css";
 import "./cwd/cwd.css";
+import "./cwd/student-visual-pass.css";
 import "./cwd/presentation.css";
 
 function normalizeLegacyHashRoute() {

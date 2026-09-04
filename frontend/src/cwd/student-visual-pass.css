@@ -18,12 +18,19 @@
   line-height: 1.45;
 }
 
+.cwd-student > h1 {
+  width: min(100%, 900px);
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
 .cwd-student h1 {
   margin-bottom: .9rem;
-  font-size: clamp(1.9rem, 3.6vw, 3.25rem);
-  font-weight: 720;
-  line-height: 1.04;
-  letter-spacing: -.03em;
+  font-size: clamp(1.75rem, 3.1vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -.025em;
 }
 
 .cwd-student .cwd-field {
@@ -59,7 +66,7 @@
 
   .cwd-student h1 {
     margin-bottom: .75rem;
-    font-size: clamp(1.8rem, 3.1vw, 2.75rem);
+    font-size: clamp(1.7rem, 2.8vw, 2.5rem);
   }
 
   .cwd-student .cwd-field {
@@ -84,8 +91,12 @@
     width: 100%;
   }
 
+  .cwd-student > h1 {
+    width: 100%;
+  }
+
   .cwd-student h1 {
-    font-size: clamp(1.8rem, 8vw, 2.7rem);
+    font-size: clamp(1.7rem, 7.2vw, 2.4rem);
   }
 
   .cwd-student .cwd-field {

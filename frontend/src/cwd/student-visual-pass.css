@@ -1,0 +1,98 @@
+/* Stage 5 student-view refinement: reduce vertical overspill while preserving CWD visual identity. */
+.cwd-student {
+  padding: clamp(1rem, 2.5vw, 2rem);
+  justify-content: flex-start;
+}
+
+.cwd-student > * {
+  width: min(100%, 900px);
+}
+
+.cwd-student .cwd-kicker {
+  margin-bottom: .55rem;
+}
+
+.cwd-student .cwd-entry {
+  margin-bottom: .7rem;
+  font-size: clamp(1.08rem, 1.5vw, 1.28rem);
+  line-height: 1.45;
+}
+
+.cwd-student h1 {
+  margin-bottom: .9rem;
+  font-size: clamp(1.9rem, 3.6vw, 3.25rem);
+  font-weight: 720;
+  line-height: 1.04;
+  letter-spacing: -.03em;
+}
+
+.cwd-student .cwd-field {
+  min-height: clamp(300px, 38vh, 360px);
+}
+
+.cwd-student .cwd-confidence {
+  margin-top: .9rem;
+}
+
+.cwd-student .cwd-step-label {
+  margin-bottom: .55rem;
+}
+
+.cwd-student .cwd-confidence-points button {
+  min-height: 68px;
+}
+
+.cwd-student .cwd-primary-action {
+  margin-top: .95rem;
+}
+
+@media (max-height: 760px) and (min-width: 701px) {
+  .cwd-student {
+    padding: 1rem 1.5rem;
+  }
+
+  .cwd-student .cwd-entry {
+    margin-bottom: .55rem;
+    font-size: 1.08rem;
+    line-height: 1.4;
+  }
+
+  .cwd-student h1 {
+    margin-bottom: .75rem;
+    font-size: clamp(1.8rem, 3.1vw, 2.75rem);
+  }
+
+  .cwd-student .cwd-field {
+    min-height: 290px;
+  }
+
+  .cwd-student .cwd-confidence {
+    margin-top: .75rem;
+  }
+
+  .cwd-student .cwd-confidence-points button {
+    min-height: 64px;
+  }
+}
+
+@media (max-width: 700px) {
+  .cwd-student {
+    padding: 1rem;
+  }
+
+  .cwd-student > * {
+    width: 100%;
+  }
+
+  .cwd-student h1 {
+    font-size: clamp(1.8rem, 8vw, 2.7rem);
+  }
+
+  .cwd-student .cwd-field {
+    min-height: 400px;
+  }
+
+  .cwd-student .cwd-confidence-points button {
+    min-height: 72px;
+  }
+}

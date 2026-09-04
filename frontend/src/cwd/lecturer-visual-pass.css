@@ -1,0 +1,140 @@
+/* Stage 5 lecturer-view refinement: fit the normal teaching dashboard within a laptop viewport without changing controls or behaviour. */
+.cwd-lecturer {
+  padding: .8rem clamp(.8rem, 1.5vw, 1.35rem);
+}
+
+.cwd-lecturer .cwd-control-header {
+  gap: .7rem;
+  padding-bottom: .65rem;
+}
+
+.cwd-lecturer .cwd-control-header h1 {
+  margin: .1rem 0;
+  font-size: clamp(1.35rem, 2.2vw, 2.2rem);
+  line-height: 1.05;
+}
+
+.cwd-lecturer .cwd-live-chip,
+.cwd-lecturer .cwd-count-chip {
+  padding: .45rem .65rem;
+  font-size: .75rem;
+}
+
+.cwd-lecturer .cwd-control-toolbar {
+  gap: .45rem;
+  margin: .65rem 0 .75rem;
+}
+
+.cwd-lecturer .cwd-control-button {
+  min-height: 40px;
+  padding: .55rem .8rem;
+}
+
+.cwd-lecturer .cwd-control-layout {
+  gap: .7rem;
+}
+
+.cwd-lecturer .cwd-control-main {
+  padding: .7rem;
+}
+
+.cwd-lecturer .cwd-control-side {
+  gap: .5rem;
+}
+
+.cwd-lecturer .cwd-control-stat,
+.cwd-lecturer .cwd-control-insight {
+  padding: .65rem .75rem;
+}
+
+.cwd-lecturer .cwd-control-stat > strong {
+  margin-top: .2rem;
+  font-size: 1.15rem;
+}
+
+.cwd-lecturer .cwd-control-stat small,
+.cwd-lecturer .cwd-control-insight p {
+  margin-top: .25rem;
+  margin-bottom: .1rem;
+  line-height: 1.3;
+}
+
+.cwd-lecturer .cwd-section-heading {
+  margin-bottom: .55rem;
+}
+
+.cwd-lecturer .cwd-section-heading h2 {
+  margin: .1rem 0;
+  font-size: 1.05rem;
+}
+
+.cwd-lecturer .cwd-section-heading p:not(.cwd-kicker) {
+  margin: .2rem 0;
+  line-height: 1.3;
+}
+
+.cwd-lecturer .cwd-field--lecturer,
+.cwd-lecturer .cwd-control-empty {
+  min-height: clamp(310px, 43vh, 380px);
+}
+
+.cwd-lecturer .cwd-diagnostic-board {
+  gap: .55rem;
+}
+
+.cwd-lecturer .cwd-diagnostic-row {
+  padding: .65rem;
+}
+
+.cwd-lecturer .cwd-diagnostic-bars {
+  height: 72px;
+  margin-top: .5rem;
+}
+
+@media (max-height: 760px) and (min-width: 801px) {
+  .cwd-lecturer {
+    padding: .55rem .9rem;
+  }
+
+  .cwd-lecturer .cwd-control-header {
+    padding-bottom: .5rem;
+  }
+
+  .cwd-lecturer .cwd-control-header h1 {
+    font-size: clamp(1.25rem, 1.9vw, 1.85rem);
+  }
+
+  .cwd-lecturer .cwd-control-toolbar {
+    margin: .5rem 0 .6rem;
+  }
+
+  .cwd-lecturer .cwd-control-button {
+    min-height: 36px;
+    padding: .45rem .7rem;
+  }
+
+  .cwd-lecturer .cwd-control-main {
+    padding: .55rem;
+  }
+
+  .cwd-lecturer .cwd-field--lecturer,
+  .cwd-lecturer .cwd-control-empty {
+    min-height: 285px;
+  }
+
+  .cwd-lecturer .cwd-control-stat,
+  .cwd-lecturer .cwd-control-insight {
+    padding: .55rem .65rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .cwd-lecturer .cwd-control-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cwd-lecturer .cwd-field--lecturer,
+  .cwd-lecturer .cwd-control-empty {
+    min-height: 380px;
+  }
+}

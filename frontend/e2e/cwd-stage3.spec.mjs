@@ -33,8 +33,9 @@ async function newRolePage(browser, route) {
   return { context, page };
 }
 
+// Confidence wording is activity-authored, so acceptance targets the stable engine control.
 async function chooseConfidence(page, index) {
-  const group = page.getByRole("group", { name: "How sure are you?" });
+  const group = page.locator(".cwd-confidence-points");
   await group.getByRole("button").nth(index).click();
 }
 
@@ -92,7 +93,7 @@ test("W1 social-immediate works across Student, Lecturer and Presentation surfac
     await student.page.getByRole("button", { name: "Better health and wellbeing" }).click();
     await chooseConfidence(student.page, 3);
     await student.page.getByRole("button", { name: "That’s my answer" }).click();
-    await expect(student.page.getByRole("heading", { name: /show the group responses shortly/i })).toBeVisible();
+    await expect(student.page.locator(".cwd-saved-summary")).toBeVisible();
 
     await expect(lecturer.page.getByText("1 responses", { exact: true }).first()).toBeVisible();
     await expect(lecturer.page.getByRole("heading", { name: "Responses remain hidden" })).toBeVisible();
@@ -102,14 +103,14 @@ test("W1 social-immediate works across Student, Lecturer and Presentation surfac
     await expect(presentation.page.locator(".cwd-cohort-dot")).toHaveCount(0);
 
     await lecturer.page.getByRole("button", { name: "Show group responses" }).click();
-    await expect(student.page.getByRole("heading", { name: /Here’s what everyone said/i })).toBeVisible();
-    await expect(presentation.page.getByRole("heading", { name: /Here’s what the group said/i })).toBeVisible();
+    await expect(student.page.getByRole("button", { name: "Keep going" })).toBeVisible();
+    await expect(presentation.page.locator(".cwd-presentation--reveal")).toBeVisible();
     await expect(presentation.page.locator(".cwd-cohort-dot").first()).toBeVisible();
 
     await student.page.getByRole("button", { name: "Keep going" }).click();
-    await expect(student.page.getByText("Something to think about", { exact: true })).toBeVisible();
-    await student.page.getByRole("button", { name: "Think again" }).click();
-    await expect(student.page.getByRole("heading", { name: "What changed — if anything?" })).toBeVisible();
+    await expect(student.page.locator(".cwd-guidance-stack")).toBeVisible();
+    await student.page.locator(".cwd-guidance-stack + .cwd-error + .cwd-primary-action, .cwd-guidance-stack ~ .cwd-primary-action").first().click();
+    await expect(student.page.locator(".cwd-resolution-options")).toBeVisible();
     await student.page.getByRole("button", { name: "I would keep my answer and feel about as confident" }).click();
     await student.page.getByRole("button", { name: "Finish" }).click();
     await expect(student.page.getByRole("heading", { name: "That’s it." })).toBeVisible();
@@ -136,15 +137,15 @@ test("W2 social-delayed preserves the teaching gap and lecturer-controlled final
     await expect(presentation.page.locator(".cwd-presentation-count > strong")).toHaveText("1");
 
     await lecturer.page.getByRole("button", { name: "Show group responses" }).click();
-    await expect(student.page.getByRole("heading", { name: /Here’s what everyone said/i })).toBeVisible();
+    await expect(student.page.getByRole("button", { name: "Keep going" })).toBeVisible();
     await student.page.getByRole("button", { name: "Keep going" }).click();
     await expect(student.page.getByRole("heading", { name: "There’s one more response to make." })).toBeVisible();
-    await expect(presentation.page.getByRole("heading", { name: /Here’s what the group said/i })).toBeVisible();
+    await expect(presentation.page.locator(".cwd-presentation--reveal")).toBeVisible();
     await expect(lecturer.page.getByRole("button", { name: "Open final response" })).toBeVisible();
 
     await lecturer.page.getByRole("button", { name: "Open final response" }).click();
-    await expect(student.page.getByRole("heading", { name: "What changed — if anything?" })).toBeVisible();
-    await expect(presentation.page.getByRole("heading", { name: "What changed — if anything?" })).toBeVisible();
+    await expect(student.page.locator(".cwd-resolution-options")).toBeVisible();
+    await expect(presentation.page.locator(".cwd-presentation--centred")).toBeVisible();
 
     await student.page.getByRole("button", { name: "I would keep my answer and feel about as confident" }).click();
     await student.page.getByRole("button", { name: "Finish" }).click();

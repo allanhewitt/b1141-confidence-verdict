@@ -9,6 +9,7 @@ import {
   submitSocialResolution,
   submitSocialResponse,
 } from "./api.js";
+import { copyText } from "./copy.js";
 import CwdField from "./CwdField.jsx";
 import {
   allowedFinalConfidenceValues,
@@ -174,8 +175,8 @@ export default function SocialStudent({ activity, initialSession }) {
     return (
       <StudentShell>
         <div className="cwd-complete-orb" aria-hidden="true" />
-        <p className="cwd-kicker">This activity has ended</p>
-        <h1>Thanks for taking part.</h1>
+        <p className="cwd-kicker">{copyText(activity.config, "ended.kicker", "This activity has ended")}</p>
+        <h1>{copyText(activity.config, "ended.heading", "Thanks for taking part.")}</h1>
       </StudentShell>
     );
   }
@@ -184,9 +185,9 @@ export default function SocialStudent({ activity, initialSession }) {
     return (
       <StudentShell>
         <div className="cwd-complete-orb" aria-hidden="true" />
-        <p className="cwd-kicker">Finished</p>
-        <h1>That’s it.</h1>
-        <p className="cwd-lead">You’re finished with this activity.</p>
+        <p className="cwd-kicker">{copyText(activity.config, "completion.kicker", "Finished")}</p>
+        <h1>{copyText(activity.config, "completion.heading", "That’s it.")}</h1>
+        <p className="cwd-lead">{copyText(activity.config, "completion.lead", "You’re finished with this activity.")}</p>
       </StudentShell>
     );
   }
@@ -194,7 +195,7 @@ export default function SocialStudent({ activity, initialSession }) {
   if (!personal?.position || editing) {
     return (
       <StudentShell>
-        <p className="cwd-kicker">What do you think?</p>
+        <p className="cwd-kicker">{copyText(activity.config, "entry.kicker", "What do you think?")}</p>
         {activity.config.entry?.text && <p className="cwd-entry">{activity.config.entry.text}</p>}
         <h1>{activity.config.judgement.prompt}</h1>
         <CwdField
@@ -206,7 +207,12 @@ export default function SocialStudent({ activity, initialSession }) {
           showPersonal={Boolean(optionId && confidence)}
           ariaLabel="Choose the answer closest to your view"
         />
-        <ConfidenceControl activity={activity} value={confidence} onChange={setConfidence} />
+        <ConfidenceControl
+          activity={activity}
+          value={confidence}
+          onChange={setConfidence}
+          label={activity.config.confidence?.prompt || "How sure are you?"}
+        />
         <ErrorMessage error={error} />
         <button
           type="button"
@@ -223,8 +229,8 @@ export default function SocialStudent({ activity, initialSession }) {
   if (!session?.revealed) {
     return (
       <StudentShell>
-        <p className="cwd-kicker">Response saved</p>
-        <h1>We’ll show the group responses shortly.</h1>
+        <p className="cwd-kicker">{copyText(activity.config, "waiting.kicker", "Response saved")}</p>
+        <h1>{copyText(activity.config, "waiting.heading", "We’ll show the group responses shortly.")}</h1>
         <CwdField
           activity={activity}
           selectedOptionId={personal.position.option_id}
@@ -247,8 +253,8 @@ export default function SocialStudent({ activity, initialSession }) {
   if (!revealAcknowledged) {
     return (
       <StudentShell wide>
-        <p className="cwd-kicker">How did the group respond?</p>
-        <h1>Here’s what everyone said.</h1>
+        <p className="cwd-kicker">{copyText(activity.config, "reveal.kicker", "How did the group respond?")}</p>
+        <h1>{copyText(activity.config, "reveal.heading", "Here’s what everyone said.")}</h1>
         <CwdField
           activity={activity}
           selectedOptionId={personal.position.option_id}
@@ -257,10 +263,14 @@ export default function SocialStudent({ activity, initialSession }) {
           ariaLabel="Group responses with your response highlighted"
         />
         <p className="cwd-lead cwd-centred">
-          Your response is highlighted. Look for where people agree, where they differ, and how sure they seem.
+          {copyText(
+            activity.config,
+            "reveal.prompt",
+            "Your response is highlighted. Look for where people agree, where they differ, and how sure they seem."
+          )}
         </p>
         <button type="button" className="cwd-primary-action cwd-action-centred" onClick={continueFromReveal}>
-          Keep going
+          {copyText(activity.config, "reveal.continue_label", "Keep going")}
         </button>
         <ErrorMessage error={error} />
       </StudentShell>
@@ -271,7 +281,7 @@ export default function SocialStudent({ activity, initialSession }) {
   if (guidance?.source === "in_app" && !personal?.guidance_reached) {
     return (
       <StudentShell>
-        <p className="cwd-kicker">Something to think about</p>
+        <p className="cwd-kicker">{copyText(activity.config, "guidance.kicker", "Something to think about")}</p>
         <div className="cwd-guidance-stack">
           {(guidance.content || []).map((block, index) => (
             <div className="cwd-guidance-card" key={`${block.type}-${index}`}>
@@ -281,7 +291,7 @@ export default function SocialStudent({ activity, initialSession }) {
         </div>
         <ErrorMessage error={error} />
         <button type="button" className="cwd-primary-action" disabled={busy} onClick={continueFromGuidance}>
-          {busy ? "Saving…" : "Think again"}
+          {busy ? "Saving…" : copyText(activity.config, "guidance.continue_label", "Think again")}
         </button>
       </StudentShell>
     );
@@ -291,9 +301,9 @@ export default function SocialStudent({ activity, initialSession }) {
     return (
       <StudentShell>
         <div className="cwd-waiting-orb" aria-hidden="true" />
-        <p className="cwd-kicker">Stay with the group</p>
-        <h1>There’s one more response to make.</h1>
-        <p className="cwd-lead">It will appear here when it’s time.</p>
+        <p className="cwd-kicker">{copyText(activity.config, "resolution_wait.kicker", "Stay with the group")}</p>
+        <h1>{copyText(activity.config, "resolution_wait.heading", "There’s one more response to make.")}</h1>
+        <p className="cwd-lead">{copyText(activity.config, "resolution_wait.lead", "It will appear here when it’s time.")}</p>
         <ErrorMessage error={error} />
       </StudentShell>
     );
@@ -309,9 +319,9 @@ export default function SocialStudent({ activity, initialSession }) {
 
   return (
     <StudentShell>
-      <p className="cwd-kicker">One last look</p>
-      <h1>What changed — if anything?</h1>
-      <p className="cwd-lead">Think again about your original answer and how sure you were.</p>
+      <p className="cwd-kicker">{copyText(activity.config, "resolution.kicker", "One last look")}</p>
+      <h1>{copyText(activity.config, "resolution.heading", activity.config.resolution?.prompt || "What changed — if anything?")}</h1>
+      <p className="cwd-lead">{copyText(activity.config, "resolution.lead", "Think again about your original answer and how sure you were.")}</p>
 
       <div className="cwd-resolution-options">
         {choices.map((choice) => (
@@ -336,7 +346,7 @@ export default function SocialStudent({ activity, initialSession }) {
 
       {revised && (
         <section className="cwd-revision-section">
-          <div className="cwd-step-label">What would you choose now?</div>
+          <div className="cwd-step-label">{copyText(activity.config, "resolution.revised_option_prompt", "What would you choose now?")}</div>
           <div className="cwd-revision-options">
             {socialOptions(activity).map((option) => (
               <button
@@ -359,7 +369,7 @@ export default function SocialStudent({ activity, initialSession }) {
           value={finalConfidence}
           onChange={setFinalConfidence}
           allowedValues={confidenceValues}
-          label="How sure are you now?"
+          label={copyText(activity.config, "resolution.confidence_prompt", "How sure are you now?")}
         />
       )}
 

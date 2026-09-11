@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { loadAggregate, loadResponseCount, loadSessionState } from "./api.js";
+import { copyText } from "./copy.js";
 import CwdField from "./CwdField.jsx";
 import { profileProps } from "./visual-profile.js";
 
@@ -45,9 +46,11 @@ export default function PresentationView({ activity, initialSession }) {
     return (
       <main {...profileProps()} className="cwd-presentation cwd-presentation--centred">
         <div className="cwd-presentation-orb" aria-hidden="true" />
-        <p className="cwd-kicker">Take a moment</p>
+        <p className="cwd-kicker">{copyText(activity.config, "presentation.self_audit.kicker", "Take a moment")}</p>
         <h1>{activity.config.judgement.prompt}</h1>
-        <p className="cwd-presentation-lead">Work through this on your own device.</p>
+        <p className="cwd-presentation-lead">
+          {copyText(activity.config, "presentation.self_audit.lead", "Work through this on your own device.")}
+        </p>
       </main>
     );
   }
@@ -56,8 +59,8 @@ export default function PresentationView({ activity, initialSession }) {
     return (
       <main {...profileProps()} className="cwd-presentation cwd-presentation--centred">
         <div className="cwd-presentation-orb" aria-hidden="true" />
-        <p className="cwd-kicker">Finished</p>
-        <h1>Thanks for taking part.</h1>
+        <p className="cwd-kicker">{copyText(activity.config, "presentation.closed.kicker", "Finished")}</p>
+        <h1>{copyText(activity.config, "presentation.closed.heading", "Thanks for taking part.")}</h1>
       </main>
     );
   }
@@ -68,7 +71,7 @@ export default function PresentationView({ activity, initialSession }) {
         <div className="cwd-presentation-grid" aria-hidden="true" />
         <div className="cwd-presentation-collecting">
           <section>
-            <p className="cwd-kicker">What do you think?</p>
+            <p className="cwd-kicker">{copyText(activity.config, "presentation.collecting.kicker", "What do you think?")}</p>
             <h1>{activity.config.judgement.prompt}</h1>
             {activity.config.entry?.text && <p className="cwd-presentation-lead">{activity.config.entry.text}</p>}
           </section>
@@ -91,21 +94,36 @@ export default function PresentationView({ activity, initialSession }) {
     return (
       <main {...profileProps()} className="cwd-presentation cwd-presentation--centred">
         <div className="cwd-presentation-orb" aria-hidden="true" />
-        <p className="cwd-kicker">One last look</p>
-        <h1>What changed — if anything?</h1>
-        <p className="cwd-presentation-lead">Think again about both your answer and how sure you are.</p>
+        <p className="cwd-kicker">{copyText(activity.config, "presentation.resolution.kicker", "One last look")}</p>
+        <h1>
+          {copyText(
+            activity.config,
+            "presentation.resolution.heading",
+            activity.config.resolution?.prompt || "What changed — if anything?"
+          )}
+        </h1>
+        <p className="cwd-presentation-lead">
+          {copyText(
+            activity.config,
+            "presentation.resolution.lead",
+            "Think again about both your answer and how sure you are."
+          )}
+        </p>
       </main>
     );
   }
 
   const cohort = aggregate?.cohort;
+  const revealPrompt = copyText(activity.config, "presentation.reveal.prompt", "");
   return (
     <main {...profileProps()} className="cwd-presentation cwd-presentation--reveal">
       <div className="cwd-presentation-grid" aria-hidden="true" />
       <header className="cwd-presentation-header">
         <div>
-          <p className="cwd-kicker">How did the group respond?</p>
-          <h1>Here’s what the group said.</h1>
+          <p className="cwd-kicker">
+            {copyText(activity.config, "presentation.reveal.kicker", "How did the group respond?")}
+          </p>
+          <h1>{copyText(activity.config, "presentation.reveal.heading", "Here’s what the group said.")}</h1>
         </div>
         <span>{cohort?.total ?? 0} responses</span>
       </header>
@@ -117,7 +135,11 @@ export default function PresentationView({ activity, initialSession }) {
         ariaLabel="Group response pattern"
       />
       <div className="cwd-presentation-prompt">
-        Look for where responses <strong>agree</strong>, where they <strong>differ</strong>, and how <strong>sure</strong> people seem.
+        {revealPrompt || (
+          <>
+            Look for where responses <strong>agree</strong>, where they <strong>differ</strong>, and how <strong>sure</strong> people seem.
+          </>
+        )}
       </div>
     </main>
   );

@@ -13,7 +13,6 @@ import "./cwd/lecturer-visual-pass.css";
 import "./cwd/presentation.css";
 
 function normalizeLegacyHashRoute() {
-  if (window.location.pathname !== "/") return;
   if (!window.location.hash.startsWith("#/")) return;
   window.history.replaceState(null, "", window.location.hash.slice(1));
 }

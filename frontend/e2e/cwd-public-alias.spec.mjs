@@ -60,3 +60,21 @@ test("legacy hash routes continue to resolve during the transition", async ({ br
     await lecturer.context.close();
   }
 });
+
+test("legacy presentation hash link resolves when opened from the lecturer path", async ({ browser }) => {
+  const lecturer = await startSession(browser);
+  const presentationContext = await browser.newContext();
+  const presentation = await presentationContext.newPage();
+
+  try {
+    await presentation.goto(`/control/${W1}#/display/${W1}`);
+    await expect(presentation.getByRole("heading", { name: /Which of these benefits/ })).toBeVisible();
+
+    const url = new URL(presentation.url());
+    expect(url.pathname).toBe(`/display/${W1}`);
+    expect(url.hash).toBe("");
+  } finally {
+    await presentationContext.close();
+    await lecturer.context.close();
+  }
+});

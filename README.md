@@ -112,17 +112,18 @@ A student arriving after reveal may still place themselves and receive personali
 ## Structure
 
 ```text
+Dockerfile             consolidated production image
 backend/
-  server.js
+  server.js             API + production static hosting
   schema.sql
 frontend/
   src/
-    Respond.jsx       /#/respond/{id}
-    Control.jsx       /#/control/{id}
-    Display.jsx       /#/display/{id}
-    Heatmap.jsx       shared selection × confidence space
-    styles.css        base application styling
-    landscape.css     hidden/revealed landscape styling
+    Respond.jsx         student surface
+    Control.jsx         lecturer surface
+    Display.jsx         presentation surface
+    Heatmap.jsx         shared selection × confidence space
+    styles.css          base application styling
+    landscape.css       hidden/revealed landscape styling
 ```
 
 ## Live state and persistence
@@ -139,35 +140,43 @@ Anonymous participant tokens are activity-scoped browser identifiers, not studen
 
 ## Routes
 
-- `/#/respond/{id}`
-- `/#/control/{id}`
-- `/#/display/{id}`
+The frontend uses BrowserRouter paths and still normalises the older hash-form links for backwards compatibility.
 
-Examples:
+- student: `/respond/{id}` or a public alias such as `/cwd01`
+- lecturer: `/control/{id}`
+- presentation: `/display/{id}`
 
-- `/#/respond/b1141-w1-least-shared-benefit`
-- `/#/control/b1141-w1-least-shared-benefit`
-- `/#/display/b1141-w1-least-shared-benefit`
+Legacy links such as `/#/control/{id}` and `/#/display/{id}` continue to work and are normalised to the equivalent direct path.
 
 ## Deploying to Coolify
 
-This release changes both backend and frontend, so deploy **backend first, then frontend**.
+The canonical production deployment is now a **single Coolify application** built from the repository root.
 
-Backend:
+The root `Dockerfile`:
 
-- Base Directory `/backend`
-- port 4000
+1. builds the React/Vite frontend;
+2. installs the production Express backend;
+3. copies the frontend build into the runtime image;
+4. sets `STATIC_DIR=/app/frontend-dist`;
+5. serves both the UI and `/api/...` from the same process and public origin.
+
+Coolify configuration:
+
+- Base Directory: repository root
+- Dockerfile: `/Dockerfile`
+- port: `4000`
 - `DATABASE_URL`
 - `PORT=4000`
-- `ALLOWED_ORIGINS=*`
+- `ENABLE_STAGE3_CWD=true`
+- `CWD_LECTURER_KEY`
 - `PERSIST_RESPONSES` as required
+- `ALLOWED_ORIGINS` may be the public app origin or `*`
 
-Frontend:
+No `VITE_API_BASE` is required for the production build. The frontend uses same-origin `/api/...` requests in production. A `VITE_API_BASE` override remains available for development/testing.
 
-- Base Directory `/frontend`
-- Publish Directory `/dist`
-- static site enabled
-- `VITE_API_BASE` available at build time and pointed at the deployed backend
+`GET /api/health` reports `consolidated_app: true` when the production static bundle is mounted.
+
+The older split frontend/backend deployment can be retained temporarily as rollback infrastructure while the consolidated service is accepted in production; it is no longer the preferred architecture.
 
 ## Adding future activities
 

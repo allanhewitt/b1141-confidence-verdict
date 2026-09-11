@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import pg from "pg";
+import path from "node:path";
 import { createStage3CwdRouter } from "./stage3-cwd.js";
 import { createStage3CwdSelfAuditRouter } from "./stage3-cwd-self-audit.js";
 
@@ -22,6 +23,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const PERSIST_RESPONSES = process.env.PERSIST_RESPONSES === "true";
 const ENABLE_STAGE3_CWD = process.env.ENABLE_STAGE3_CWD === "true";
 const CWD_LECTURER_KEY = process.env.CWD_LECTURER_KEY || "";
+const STATIC_DIR = (process.env.STATIC_DIR || "").trim();
 
 // The live mechanic is a hidden two-dimensional space. Before reveal,
 // learners may reposition themselves. At reveal, the cohort landscape is
@@ -369,8 +371,17 @@ app.get("/api/health", (req, res) =>
     ok: true,
     persisting: PERSIST_RESPONSES,
     stage3_cwd_enabled: ENABLE_STAGE3_CWD,
+    consolidated_app: Boolean(STATIC_DIR),
   })
 );
+
+if (STATIC_DIR) {
+  app.use(express.static(STATIC_DIR));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) return next();
+    return res.sendFile(path.join(STATIC_DIR, "index.html"));
+  });
+}
 
 async function ensureSchema() {
   await pool.query(`
@@ -387,12 +398,12 @@ async function start() {
   await ensureSchema();
   app.listen(PORT, () =>
     console.log(
-      `Confidence-verdict API listening on :${PORT} (persist=${PERSIST_RESPONSES}, stage3_cwd=${ENABLE_STAGE3_CWD})`
+      `Confidence-verdict app listening on :${PORT} (persist=${PERSIST_RESPONSES}, stage3_cwd=${ENABLE_STAGE3_CWD}, static=${Boolean(STATIC_DIR)})`
     )
   );
 }
 
 start().catch((error) => {
-  console.error("Failed to start confidence-verdict API", error);
+  console.error("Failed to start confidence-verdict app", error);
   process.exit(1);
 });

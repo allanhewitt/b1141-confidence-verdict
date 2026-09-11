@@ -4,14 +4,19 @@ on:
   push:
     branches:
       - stage3-cwd-integrated-acceptance
+      - consolidate-cwd-single-app
     paths:
       - "backend/**"
       - "frontend/**"
+      - "Dockerfile"
+      - ".dockerignore"
       - ".github/workflows/integrated-acceptance.yml"
   pull_request:
     paths:
       - "backend/**"
       - "frontend/**"
+      - "Dockerfile"
+      - ".dockerignore"
       - ".github/workflows/integrated-acceptance.yml"
 
 jobs:
@@ -34,7 +39,7 @@ jobs:
     env:
       TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/b1141_confidence_verdict_e2e
       E2E_LECTURER_KEY: stage3-e2e-facilitator-key
-      E2E_API_BASE: http://127.0.0.1:4000
+      E2E_API_BASE: http://127.0.0.1:4173
       E2E_BASE_URL: http://127.0.0.1:4173
 
     steps:
@@ -77,7 +82,11 @@ jobs:
            );
           SQL
 
-      - name: Start Stage 3 backend
+      - name: Build production frontend for same-origin hosting
+        working-directory: frontend
+        run: npm run build
+
+      - name: Start consolidated CWD app
         run: |
           cd backend
           DATABASE_URL="$TEST_DATABASE_URL" \
@@ -85,53 +94,36 @@ jobs:
           CWD_LECTURER_KEY="$E2E_LECTURER_KEY" \
           PERSIST_RESPONSES=false \
           ALLOWED_ORIGINS="$E2E_BASE_URL" \
-          PORT=4000 \
-          npm start > /tmp/cwd-backend.log 2>&1 &
-          echo $! > /tmp/cwd-backend.pid
+          STATIC_DIR="$GITHUB_WORKSPACE/frontend/dist" \
+          PORT=4173 \
+          npm start > /tmp/cwd-app.log 2>&1 &
+          echo $! > /tmp/cwd-app.pid
           for i in $(seq 1 40); do
-            if curl -fsS "$E2E_API_BASE/api/health" >/tmp/cwd-health.json; then
+            if curl -fsS "$E2E_BASE_URL/api/health" >/tmp/cwd-health.json; then
               cat /tmp/cwd-health.json
+              grep -q '"consolidated_app":true' /tmp/cwd-health.json
+              curl -fsS "$E2E_BASE_URL/cwd01" >/dev/null
               exit 0
             fi
             sleep 1
           done
-          cat /tmp/cwd-backend.log
-          exit 1
-
-      - name: Build production frontend against acceptance backend
-        working-directory: frontend
-        env:
-          VITE_API_BASE: http://127.0.0.1:4000
-        run: npm run build
-
-      - name: Start production-built frontend
-        run: |
-          cd frontend
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/cwd-frontend.log 2>&1 &
-          echo $! > /tmp/cwd-frontend.pid
-          for i in $(seq 1 40); do
-            if curl -fsS "$E2E_BASE_URL" >/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          cat /tmp/cwd-frontend.log
+          cat /tmp/cwd-app.log
           exit 1
 
       - name: Run W1 W2 W9 three-surface browser acceptance
         working-directory: frontend
         run: npm run test:e2e
 
-      - name: Show service logs on failure
+      - name: Build consolidated production Docker image
+        run: docker build -t cwd-consolidated-acceptance .
+
+      - name: Show service log on failure
         if: failure()
         run: |
-          echo "--- backend ---"
-          cat /tmp/cwd-backend.log || true
-          echo "--- frontend ---"
-          cat /tmp/cwd-frontend.log || true
+          echo "--- consolidated app ---"
+          cat /tmp/cwd-app.log || true
 
-      - name: Stop acceptance services
+      - name: Stop acceptance service
         if: always()
         run: |
-          test ! -f /tmp/cwd-frontend.pid || kill "$(cat /tmp/cwd-frontend.pid)" || true
-          test ! -f /tmp/cwd-backend.pid || kill "$(cat /tmp/cwd-backend.pid)" || true
+          test ! -f /tmp/cwd-app.pid || kill "$(cat /tmp/cwd-app.pid)" || true

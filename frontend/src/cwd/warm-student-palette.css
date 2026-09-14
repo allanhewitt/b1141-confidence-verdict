@@ -1,0 +1,162 @@
+/*
+ * CWD student palette refinement — 14 September 2026.
+ *
+ * The visual profile is injected as inline CSS custom properties so the
+ * student-specific warm palette must explicitly take precedence here.
+ * This file is imported last and is intentionally scoped to .cwd-student.
+ *
+ * Principle: warm light surfaces, never stark white.
+ */
+
+.cwd-student {
+  --cwd-bg: #eee8dc !important;
+  --cwd-panel: #e7dfd1 !important;
+  --cwd-panel-2: #ddd4c5 !important;
+  --cwd-ink: #263a34 !important;
+  --cwd-muted: #68756f !important;
+  --cwd-line: rgba(38, 58, 52, .13) !important;
+  --cwd-line-strong: rgba(38, 58, 52, .24) !important;
+  --cwd-accent: #0b6b61 !important;
+  --cwd-accent-2: #5d8f82 !important;
+  --cwd-danger: #8b3b36 !important;
+  --cwd-shadow: 0 16px 38px rgba(55, 65, 58, .07) !important;
+
+  color: #263a34;
+  background:
+    radial-gradient(circle at 84% 2%, rgba(91, 137, 124, .07), transparent 22rem),
+    linear-gradient(180deg, #f1ece2 0%, #eee8dc 100%);
+}
+
+.cwd-student h1,
+.cwd-student h2,
+.cwd-student h3,
+.cwd-student strong {
+  color: #263a34;
+}
+
+.cwd-student .cwd-kicker {
+  color: #0b6b61;
+}
+
+.cwd-student .cwd-entry,
+.cwd-student .cwd-lead,
+.cwd-student .cwd-step-label,
+.cwd-student .cwd-saved-summary span,
+.cwd-student .cwd-zone-label,
+.cwd-student .cwd-target-options span {
+  color: #68756f;
+}
+
+.cwd-student .cwd-field {
+  border-color: rgba(77, 92, 84, .14);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(87, 137, 122, .085), transparent 27%),
+    linear-gradient(150deg, #eee7da, #e4dccd);
+  box-shadow: 0 14px 34px rgba(64, 73, 67, .055);
+}
+
+.cwd-student .cwd-field-grid {
+  opacity: .17;
+  background-image:
+    linear-gradient(rgba(38, 58, 52, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38, 58, 52, .04) 1px, transparent 1px);
+}
+
+.cwd-student .cwd-field-glow {
+  background: rgba(84, 139, 123, .08);
+}
+
+.cwd-student .cwd-zone,
+.cwd-student .cwd-confidence-points button,
+.cwd-student .cwd-resolution-options button,
+.cwd-student .cwd-revision-options button,
+.cwd-student .cwd-target-options button,
+.cwd-student .cwd-saved-summary,
+.cwd-student .cwd-original-rating,
+.cwd-student .cwd-audit-finish,
+.cwd-student .cwd-audit-item {
+  color: #263a34;
+  background: #e9e1d4;
+  border-color: rgba(61, 77, 69, .14);
+  box-shadow: 0 7px 18px rgba(55, 65, 58, .035);
+}
+
+.cwd-student .cwd-zone:hover,
+.cwd-student .cwd-confidence-points button:hover:not(:disabled),
+.cwd-student .cwd-resolution-options button:hover:not(:disabled),
+.cwd-student .cwd-revision-options button:hover:not(:disabled),
+.cwd-student .cwd-target-options button:hover:not(:disabled) {
+  background: #e3dacb;
+}
+
+.cwd-student .cwd-zone.is-selected {
+  color: #20342e;
+  background: color-mix(in srgb, var(--cwd-zone-color) 14%, #e9e1d4);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--cwd-zone-color) 38%, transparent),
+    0 10px 22px rgba(55, 65, 58, .055);
+}
+
+.cwd-student .cwd-confidence-points button.is-selected,
+.cwd-student .cwd-resolution-options button.is-selected,
+.cwd-student .cwd-revision-options button.is-selected {
+  color: #183d34;
+  border-color: #4f8678;
+  background: #d4e3dd;
+}
+
+.cwd-student .cwd-primary-action {
+  color: #20312c;
+  background: #a4bdb4;
+  border-color: #9ab4aa;
+  box-shadow: none;
+}
+
+.cwd-student .cwd-primary-action:hover:not(:disabled) {
+  color: #172722;
+  background: #94aea4;
+  border-color: #8aa59b;
+}
+
+.cwd-student .cwd-secondary-action {
+  color: #275b50;
+  background: transparent;
+  border-color: rgba(39, 91, 80, .25);
+}
+
+.cwd-student .cwd-guidance-card,
+.cwd-student .cwd-reflection,
+.cwd-student .cwd-recap {
+  color: #263a34;
+  background: #dde7e1;
+  border-color: rgba(70, 118, 104, .17);
+}
+
+.cwd-student .cwd-complete-orb,
+.cwd-student .cwd-waiting-orb {
+  background:
+    radial-gradient(circle, #ded5c7 0 12%, #5e9688 13% 28%, rgba(94, 150, 136, .13) 29% 52%, transparent 53%);
+  box-shadow: 0 0 48px rgba(75, 125, 111, .14);
+}
+
+.cwd-student .cwd-error {
+  color: #743832;
+  background: #ead7d2;
+  border-color: rgba(139, 59, 54, .24);
+}
+
+/* Keep the phone treatment soft and tactile rather than card-heavy. */
+@media (max-width: 700px) {
+  .cwd-student .cwd-field {
+    background:
+      radial-gradient(circle at 50% 46%, rgba(87, 137, 122, .085), transparent 28%),
+      #e7dfd1;
+  }
+
+  .cwd-student .cwd-zone,
+  .cwd-student .cwd-confidence-points button,
+  .cwd-student .cwd-resolution-options button,
+  .cwd-student .cwd-revision-options button {
+    background: #e9e1d4;
+  }
+}

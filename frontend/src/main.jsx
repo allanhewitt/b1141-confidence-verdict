@@ -12,6 +12,7 @@ import "./cwd/cwd.css";
 import "./cwd/student-visual-pass.css";
 import "./cwd/lecturer-visual-pass.css";
 import "./cwd/presentation.css";
+import "./cwd/surface-doctrine.css";
 
 function normalizeLegacyHashRoute() {
   if (!window.location.hash.startsWith("#/")) return;

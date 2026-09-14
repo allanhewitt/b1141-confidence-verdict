@@ -12,14 +12,24 @@ async function closeAnyOpenSession(request) {
   await request.post(`${API}/api/cwd/sessions/${session.id}/close`, { headers });
 }
 
-async function startSession(browser) {
+async function createScheduledRun(request) {
+  const response = await request.post(`${API}/api/cwd/activities/${W1}/sessions`, {
+    headers: { "X-GEDL-Lecturer-Key": FACILITATOR_KEY },
+    data: {},
+  });
+  expect(response.ok()).toBeTruthy();
+  return response.json();
+}
+
+async function lecturerForCurrentRun(browser, request) {
+  await createScheduledRun(request);
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(`/control/${W1}`);
   await page.getByLabel("Facilitator key").fill(FACILITATOR_KEY);
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Start session" }).click();
   await expect(page.getByText("Session open", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start session" })).toHaveCount(0);
   return { context, page };
 }
 
@@ -27,8 +37,8 @@ test.afterEach(async ({ request }) => {
   await closeAnyOpenSession(request);
 });
 
-test("cwd01 keeps the public alias in the address bar while loading the canonical activity", async ({ browser }) => {
-  const lecturer = await startSession(browser);
+test("cwd01 keeps the public alias in the address bar while loading the canonical activity", async ({ browser, request }) => {
+  const lecturer = await lecturerForCurrentRun(browser, request);
   const studentContext = await browser.newContext();
   const student = await studentContext.newPage();
 
@@ -46,8 +56,8 @@ test("cwd01 keeps the public alias in the address bar while loading the canonica
   }
 });
 
-test("legacy hash routes continue to resolve during the transition", async ({ browser }) => {
-  const lecturer = await startSession(browser);
+test("legacy hash routes continue to resolve during the transition", async ({ browser, request }) => {
+  const lecturer = await lecturerForCurrentRun(browser, request);
   const studentContext = await browser.newContext();
   const student = await studentContext.newPage();
 
@@ -61,8 +71,8 @@ test("legacy hash routes continue to resolve during the transition", async ({ br
   }
 });
 
-test("legacy presentation hash link resolves when opened from the lecturer path", async ({ browser }) => {
-  const lecturer = await startSession(browser);
+test("legacy presentation hash link resolves when opened from the lecturer path", async ({ browser, request }) => {
+  const lecturer = await lecturerForCurrentRun(browser, request);
   const presentationContext = await browser.newContext();
   const presentation = await presentationContext.newPage();
 

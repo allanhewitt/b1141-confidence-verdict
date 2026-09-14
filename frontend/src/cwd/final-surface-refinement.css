@@ -1,0 +1,252 @@
+/*
+ * Final Week 1 surface refinement.
+ * Student = quiet, warm, mobile-first.
+ * Lecturer = functional.
+ * Presentation = creative, room-scale and pedagogically expressive.
+ */
+
+/* STUDENT — adopt the warm GRW family on personal devices. */
+.cwd-student {
+  --cwd-bg: #f3f0e8;
+  --cwd-panel: #fffef9;
+  --cwd-panel-2: #ece8dd;
+  --cwd-ink: #182321;
+  --cwd-muted: #5f6b67;
+  --cwd-line: rgba(24, 35, 33, .12);
+  --cwd-line-strong: rgba(24, 35, 33, .22);
+  --cwd-accent: #0b6b61;
+  --cwd-accent-2: #0b6b61;
+  --cwd-danger: #8b3b36;
+  --cwd-shadow: 0 18px 46px rgba(24, 35, 33, .08);
+  color: var(--cwd-ink);
+  background:
+    radial-gradient(circle at 88% 4%, rgba(11, 107, 97, .055), transparent 20rem),
+    #f3f0e8;
+}
+
+.cwd-student .cwd-kicker {
+  color: #0b6b61;
+  opacity: 1;
+}
+
+.cwd-student .cwd-entry,
+.cwd-student .cwd-lead,
+.cwd-student .cwd-step-label,
+.cwd-student .cwd-saved-summary span {
+  color: #5f6b67;
+}
+
+.cwd-student .cwd-field {
+  border-color: rgba(24, 35, 33, .12);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(11, 107, 97, .06), transparent 25%),
+    linear-gradient(150deg, #fffef9, #eeeadd);
+  box-shadow: 0 16px 42px rgba(24, 35, 33, .06);
+}
+
+.cwd-student .cwd-field-grid {
+  opacity: .2;
+  background-image:
+    linear-gradient(rgba(24, 35, 33, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(24, 35, 33, .035) 1px, transparent 1px);
+}
+
+.cwd-student .cwd-zone {
+  color: #182321;
+  background: rgba(255, 254, 249, .9);
+  border-color: rgba(24, 35, 33, .15);
+  box-shadow: 0 8px 22px rgba(24, 35, 33, .035);
+}
+
+.cwd-student .cwd-zone.is-selected {
+  background: color-mix(in srgb, var(--cwd-zone-color) 13%, #fffef9);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cwd-zone-color) 45%, transparent), 0 12px 28px rgba(24, 35, 33, .06);
+}
+
+.cwd-student .cwd-zone-label,
+.cwd-student .cwd-confidence-points button,
+.cwd-student .cwd-resolution-options button,
+.cwd-student .cwd-revision-options button,
+.cwd-student .cwd-target-options button,
+.cwd-student .cwd-saved-summary,
+.cwd-student .cwd-original-rating,
+.cwd-student .cwd-audit-finish,
+.cwd-student .cwd-audit-item {
+  color: #182321;
+  background: #fffef9;
+  border-color: rgba(24, 35, 33, .12);
+}
+
+.cwd-student .cwd-confidence-points button,
+.cwd-student .cwd-resolution-options button,
+.cwd-student .cwd-revision-options button,
+.cwd-student .cwd-target-options button {
+  box-shadow: none;
+}
+
+.cwd-student .cwd-confidence-points button.is-selected,
+.cwd-student .cwd-resolution-options button.is-selected,
+.cwd-student .cwd-revision-options button.is-selected {
+  color: #12322d;
+  border-color: #0b6b61;
+  background: #e2f1ec;
+}
+
+.cwd-student .cwd-primary-action {
+  color: #fff;
+  background: #0b6b61;
+  border-color: #0b6b61;
+  box-shadow: none;
+}
+
+.cwd-student .cwd-primary-action:hover:not(:disabled) {
+  background: #074b45;
+}
+
+.cwd-student .cwd-secondary-action {
+  color: #0b5c54;
+  border-color: rgba(11, 107, 97, .25);
+}
+
+.cwd-student .cwd-guidance-card,
+.cwd-student .cwd-reflection,
+.cwd-student .cwd-recap {
+  color: #182321;
+  background: #e7f0eb;
+  border-color: rgba(11, 107, 97, .18);
+}
+
+.cwd-student .cwd-complete-orb,
+.cwd-student .cwd-waiting-orb {
+  background: radial-gradient(circle, #fffef9 0 12%, #0b6b61 13% 28%, rgba(11, 107, 97, .12) 29% 52%, transparent 53%);
+  box-shadow: 0 0 54px rgba(11, 107, 97, .16);
+}
+
+/* Phone is the reference personal-device layout, not a reduced desktop layout. */
+@media (max-width: 700px) {
+  .cwd-student {
+    min-height: 100dvh;
+    padding: 18px 14px 34px;
+    justify-content: flex-start;
+  }
+
+  .cwd-student > *,
+  .cwd-student--wide > * {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .cwd-student h1 {
+    max-width: 15ch;
+    margin-bottom: 1rem;
+    font-size: clamp(1.85rem, 8.2vw, 2.55rem);
+    line-height: 1.02;
+  }
+
+  .cwd-student .cwd-entry,
+  .cwd-student .cwd-lead {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .cwd-student .cwd-field {
+    min-height: 390px;
+    border-radius: 20px;
+  }
+
+  .cwd-student .cwd-zone {
+    width: 43%;
+    min-height: 82px;
+    padding: .7rem .55rem;
+    font-size: .9rem;
+    border-radius: 15px;
+  }
+
+  .cwd-student .cwd-zone-label {
+    width: 43%;
+    font-size: .72rem;
+  }
+
+  .cwd-student .cwd-confidence {
+    margin-top: 1rem;
+  }
+
+  .cwd-student .cwd-confidence-points {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cwd-student .cwd-confidence-points button {
+    min-height: 68px;
+    padding: .55rem;
+  }
+
+  .cwd-student .cwd-confidence-points button:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .cwd-student .cwd-primary-action,
+  .cwd-student .cwd-secondary-action {
+    width: 100%;
+    min-height: 52px;
+  }
+}
+
+/* PRESENTATION — make the cohort pattern the event in the room. */
+.cwd-presentation::before,
+.cwd-presentation::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(2px);
+}
+
+.cwd-presentation::before {
+  width: min(42vw, 620px);
+  aspect-ratio: 1;
+  top: -16vh;
+  right: -12vw;
+  border: 1px solid rgba(121, 228, 255, .14);
+  box-shadow: 0 0 0 5vw rgba(121, 228, 255, .025), 0 0 0 10vw rgba(121, 228, 255, .015);
+}
+
+.cwd-presentation::after {
+  width: min(30vw, 430px);
+  aspect-ratio: 1;
+  bottom: -18vh;
+  left: -8vw;
+  background: radial-gradient(circle, rgba(185, 255, 173, .075), transparent 68%);
+}
+
+.cwd-presentation .cwd-presentation-count > strong {
+  text-shadow: 0 0 46px rgba(121, 228, 255, .12), 0 18px 58px rgba(0, 0, 0, .2);
+}
+
+.cwd-presentation.cwd-presentation--reveal .cwd-field--presentation {
+  border-color: rgba(121, 228, 255, .2);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .24), 0 0 90px rgba(121, 228, 255, .055);
+}
+
+.cwd-presentation.cwd-presentation--reveal .cwd-cohort-dot {
+  animation: cwd-cohort-arrive .55s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.cwd-presentation .cwd-presentation-prompt {
+  max-width: 68ch;
+  padding: clamp(.9rem, 1.6vw, 1.35rem) clamp(1.1rem, 2vw, 1.7rem);
+  border-left: 3px solid rgba(121, 228, 255, .72);
+  background: rgba(17, 23, 34, .62);
+  backdrop-filter: blur(10px);
+}
+
+@keyframes cwd-cohort-arrive {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.35); }
+  to { opacity: .76; transform: translate(-50%, -50%) scale(var(--cwd-dot-scale, 1)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cwd-presentation.cwd-presentation--reveal .cwd-cohort-dot {
+    animation: none;
+  }
+}

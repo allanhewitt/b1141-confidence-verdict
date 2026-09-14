@@ -62,9 +62,31 @@ export default function Control() {
   if (error) return <main {...profileProps()} className="cwd-lecturer cwd-lecturer--gate"><p className="cwd-error">{error}</p></main>;
   if (!activity) return <main {...profileProps()} className="cwd-lecturer cwd-lecturer--gate"><p className="cwd-kicker">Loading…</p></main>;
 
+  if (!session) {
+    return (
+      <main {...profileProps()} className="cwd-lecturer">
+        <header className="cwd-control-header">
+          <div>
+            <p className="cwd-kicker">Live control</p>
+            <h1>{activity.config?.judgement?.prompt || activity.title}</h1>
+          </div>
+          <div className="cwd-live-chip">
+            <span aria-hidden="true" />
+            Waiting for scheduled run
+          </div>
+        </header>
+        <section className="cwd-control-empty">
+          <div className="cwd-waiting-orb" aria-hidden="true" />
+          <h2>Waiting for the scheduled activity.</h2>
+          <p>This view will connect automatically when the activity's CRUD availability window opens.</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <LecturerView
-      key={session?.id || "no-current-session"}
+      key={session.id}
       activity={activity}
       initialSession={session}
     />

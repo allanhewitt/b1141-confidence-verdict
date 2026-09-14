@@ -14,15 +14,42 @@ async function expectLearnerFacingVocabulary(page) {
   expect(text).not.toMatch(forbiddenLearnerVocabulary);
 }
 
-async function beginFromLecturer(browser, activityId) {
+async function apiJson(request, url, options = {}) {
+  const response = await request.fetch(url, options);
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+  return { response, payload };
+}
+
+async function createScheduledRun(request, activityId) {
+  const headers = { "X-GEDL-Lecturer-Key": FACILITATOR_KEY };
+  for (const base of ["/api/cwd/audit", "/api/cwd"]) {
+    const result = await apiJson(request, `${API}${base}/activities/${activityId}/sessions`, {
+      method: "POST",
+      headers,
+      data: {},
+    });
+    if (result.response.ok()) return result.payload;
+    if (![404, 409].includes(result.response.status())) {
+      throw new Error(result.payload?.error || `Could not create session for ${activityId}`);
+    }
+  }
+  throw new Error(`No session endpoint accepted ${activityId}`);
+}
+
+async function beginFromLecturer(browser, request, activityId) {
+  await createScheduledRun(request, activityId);
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(`/#/control/${activityId}`);
   await page.getByLabel("Facilitator key").fill(FACILITATOR_KEY);
   await page.getByRole("button", { name: "Continue" }).click();
-  await expect(page.getByRole("button", { name: "Start session" })).toBeVisible();
-  await page.getByRole("button", { name: "Start session" }).click();
   await expect(page.getByText("Session open", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start session" })).toHaveCount(0);
   return { context, page };
 }
 
@@ -42,17 +69,6 @@ async function chooseConfidence(page, index) {
 async function chooseAuditRating(page, itemName, value) {
   const group = page.getByRole("group", { name: itemName });
   await group.getByRole("button").nth(value).click();
-}
-
-async function apiJson(request, url, options = {}) {
-  const response = await request.fetch(url, options);
-  let payload = null;
-  try {
-    payload = await response.json();
-  } catch {
-    payload = null;
-  }
-  return { response, payload };
 }
 
 async function closeAnyOpenSession(request, activityId) {
@@ -77,8 +93,8 @@ test.afterEach(async ({ request }) => {
   await closeAnyOpenSession(request, W9);
 });
 
-test("W1 social-immediate works across Student, Lecturer and Presentation surfaces", async ({ browser }) => {
-  const lecturer = await beginFromLecturer(browser, W1);
+test("W1 social-immediate works across Student, Lecturer and Presentation surfaces", async ({ browser, request }) => {
+  const lecturer = await beginFromLecturer(browser, request, W1);
   const student = await newRolePage(browser, `/#/respond/${W1}`);
   const presentation = await newRolePage(browser, `/#/display/${W1}`);
 
@@ -124,8 +140,8 @@ test("W1 social-immediate works across Student, Lecturer and Presentation surfac
   }
 });
 
-test("W2 social-delayed preserves the teaching gap and lecturer-controlled final response", async ({ browser }) => {
-  const lecturer = await beginFromLecturer(browser, W2);
+test("W2 social-delayed preserves the teaching gap and lecturer-controlled final response", async ({ browser, request }) => {
+  const lecturer = await beginFromLecturer(browser, request, W2);
   const student = await newRolePage(browser, `/#/respond/${W2}`);
   const presentation = await newRolePage(browser, `/#/display/${W2}`);
 
@@ -161,8 +177,8 @@ test("W2 social-delayed preserves the teaching gap and lecturer-controlled final
   }
 });
 
-test("W9 self-audit runs privately while Lecturer sees aggregate needs and Presentation reveals no group diagnostic", async ({ browser }) => {
-  const lecturer = await beginFromLecturer(browser, W9);
+test("W9 self-audit runs privately while Lecturer sees aggregate needs and Presentation reveals no group diagnostic", async ({ browser, request }) => {
+  const lecturer = await beginFromLecturer(browser, request, W9);
   const student = await newRolePage(browser, `/#/respond/${W9}`);
   const presentation = await newRolePage(browser, `/#/display/${W9}`);
 

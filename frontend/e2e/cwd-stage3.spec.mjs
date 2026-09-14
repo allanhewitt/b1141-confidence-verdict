@@ -84,7 +84,7 @@ async function closeAnyOpenSession(request, activityId) {
 async function endFromLecturer(page) {
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "End session" }).click();
-  await expect(page.getByText("This session has ended.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "End session" })).toHaveCount(0);
 }
 
 test.afterEach(async ({ request }) => {

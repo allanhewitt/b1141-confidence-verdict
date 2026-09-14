@@ -1,0 +1,214 @@
+/*
+ * GDL surface doctrine
+ * Student = quiet. Lecturer = functional. Presentation = expressive.
+ * This layer sits after the existing Stage 5 visual passes and sharpens the
+ * distinction between personal-device, facilitation, and room-display use.
+ */
+
+/* STUDENT — quiet: the judgement, not the interface, should dominate. */
+.cwd-student {
+  background:
+    linear-gradient(rgba(255, 255, 255, .012), rgba(255, 255, 255, .012)),
+    var(--cwd-bg);
+}
+
+.cwd-student .cwd-kicker {
+  opacity: .72;
+  letter-spacing: .065em;
+}
+
+.cwd-student .cwd-entry,
+.cwd-student .cwd-lead {
+  max-width: 62ch;
+}
+
+.cwd-student .cwd-field {
+  box-shadow: none;
+}
+
+.cwd-student .cwd-confidence-points button,
+.cwd-student .cwd-resolution-options button,
+.cwd-student .cwd-revision-options button {
+  transition: border-color .14s ease, background-color .14s ease, box-shadow .14s ease;
+}
+
+.cwd-student .cwd-primary-action,
+.cwd-student .cwd-secondary-action {
+  border-radius: 999px;
+}
+
+.cwd-student .cwd-guidance-card {
+  box-shadow: none;
+}
+
+.cwd-student .cwd-complete-orb,
+.cwd-student .cwd-waiting-orb {
+  opacity: .72;
+}
+
+/* LECTURER — functional: state and controls should scan like an instrument panel. */
+.cwd-lecturer {
+  background: var(--cwd-bg);
+}
+
+.cwd-lecturer .cwd-control-header {
+  align-items: center;
+  border-bottom: 1px solid var(--cwd-line);
+}
+
+.cwd-lecturer .cwd-control-header h1 {
+  max-width: 24ch;
+}
+
+.cwd-lecturer .cwd-live-chip {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cwd-lecturer .cwd-control-toolbar {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  padding: .55rem 0;
+  background: color-mix(in srgb, var(--cwd-bg) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.cwd-lecturer .cwd-control-side {
+  position: sticky;
+  top: 4.25rem;
+}
+
+.cwd-lecturer .cwd-control-stat > strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.cwd-lecturer .cwd-control-stat,
+.cwd-lecturer .cwd-control-insight {
+  border: 1px solid var(--cwd-line);
+}
+
+.cwd-lecturer .cwd-control-button--primary {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .025) inset;
+}
+
+/* PRESENTATION — expressive: response structure should command the room. */
+.cwd-presentation {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(104, 227, 194, .11), transparent 32rem),
+    radial-gradient(circle at 13% 82%, rgba(215, 255, 112, .075), transparent 34rem),
+    var(--cwd-bg);
+}
+
+.cwd-presentation .cwd-presentation-grid {
+  opacity: .58;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .8), transparent 92%);
+}
+
+.cwd-presentation .cwd-kicker {
+  font-size: clamp(.95rem, 1.1vw, 1.3rem);
+  letter-spacing: .12em;
+}
+
+.cwd-presentation h1 {
+  text-wrap: balance;
+}
+
+.cwd-presentation .cwd-presentation-collecting {
+  position: relative;
+  z-index: 1;
+  gap: clamp(2rem, 5vw, 6rem);
+}
+
+.cwd-presentation .cwd-presentation-count {
+  position: relative;
+  isolation: isolate;
+}
+
+.cwd-presentation .cwd-presentation-count > strong {
+  margin-top: -1.2rem;
+  color: var(--cwd-ink);
+  font-size: clamp(5rem, 11vw, 11rem);
+  line-height: .82;
+  letter-spacing: -.07em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 18px 58px rgba(0, 0, 0, .17);
+  animation: cwd-count-arrive .42s cubic-bezier(.2, .78, .2, 1) both;
+}
+
+.cwd-presentation .cwd-presentation-rings {
+  animation: cwd-ring-breathe 7s ease-in-out infinite;
+}
+
+.cwd-presentation.cwd-presentation--reveal .cwd-presentation-header {
+  align-items: flex-end;
+  padding-bottom: clamp(.75rem, 1.8vh, 1.3rem);
+  border-bottom: 1px solid var(--cwd-line);
+}
+
+.cwd-presentation.cwd-presentation--reveal .cwd-presentation-header > span {
+  font-size: clamp(1rem, 1.25vw, 1.35rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.cwd-presentation .cwd-field--presentation {
+  transform-origin: 50% 55%;
+  animation: cwd-field-reveal .5s cubic-bezier(.2, .78, .2, 1) both;
+}
+
+.cwd-presentation .cwd-cohort-dot {
+  transition: transform .45s cubic-bezier(.2, .75, .2, 1), opacity .35s ease;
+}
+
+.cwd-presentation .cwd-presentation-prompt {
+  margin-top: clamp(1rem, 2.5vh, 2rem);
+  font-size: clamp(1.05rem, 1.45vw, 1.55rem);
+  line-height: 1.45;
+}
+
+.cwd-presentation.cwd-presentation--centred .cwd-presentation-orb {
+  animation: cwd-orb-breathe 6s ease-in-out infinite;
+}
+
+@keyframes cwd-count-arrive {
+  from { opacity: .18; transform: translateY(12px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cwd-field-reveal {
+  from { opacity: .2; transform: translateY(12px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cwd-ring-breathe {
+  0%, 100% { transform: scale(.985); opacity: .72; }
+  50% { transform: scale(1.025); opacity: 1; }
+}
+
+@keyframes cwd-orb-breathe {
+  0%, 100% { transform: scale(.97); opacity: .62; }
+  50% { transform: scale(1.03); opacity: .9; }
+}
+
+@media (max-width: 800px) {
+  .cwd-lecturer .cwd-control-toolbar,
+  .cwd-lecturer .cwd-control-side {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cwd-presentation .cwd-presentation-count > strong,
+  .cwd-presentation .cwd-presentation-rings,
+  .cwd-presentation .cwd-field--presentation,
+  .cwd-presentation.cwd-presentation--centred .cwd-presentation-orb {
+    animation: none;
+  }
+
+  .cwd-presentation .cwd-cohort-dot {
+    transition: none;
+  }
+}

@@ -6,6 +6,7 @@ import Control from "./Control.jsx";
 import Display from "./Display.jsx";
 import { resolvePublicActivityAlias } from "./cwd/public-aliases.js";
 import { profileProps } from "./cwd/visual-profile.js";
+import "./cwd/portal-return.js";
 import "./styles.css";
 import "./cwd/cwd.css";
 import "./cwd/student-visual-pass.css";

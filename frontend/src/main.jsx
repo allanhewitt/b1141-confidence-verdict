@@ -14,6 +14,7 @@ import "./cwd/lecturer-visual-pass.css";
 import "./cwd/presentation.css";
 import "./cwd/surface-doctrine.css";
 import "./cwd/final-surface-refinement.css";
+import "./cwd/warm-student-palette.css";
 
 function normalizeLegacyHashRoute() {
   if (!window.location.hash.startsWith("#/")) return;
